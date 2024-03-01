@@ -17,7 +17,7 @@ do
   OUT=${TWO/trimmed./} # remove trimmed. prefix
   OUT=${OUT/.fastq.gz/} # remove .fastq.gz
   #echo ${TWO}
-  hisat2 --phred33 -x genome -1 ${FILE} -2 ${TWO} -S ${OUT}.sam
+  hisat2 --phred33 -x $1 -1 ${FILE} -2 ${TWO} -S ${OUT}.sam
 done
 
 #Example file name for this sequencing run RNA-BF_Rep1_S21_L006_R1_001.fastq.gz
