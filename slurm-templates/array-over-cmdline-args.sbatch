@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# template array script- parallelize over lines in a file 
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --time=0:01:00
+#SBATCH --qos=normal
+#SBATCH --partition=amilan
+#SBATCH --job-name=slurm-job
+#SBATCH --mail-user=$USER
+#SBATCH --mail-type=all
+#SBATCH --output=%x.%A-%a.log # gives slurm.ID.log
+set -e # quit on error
+echo "[$0] $SLURM_JOB_NAME $@" # log the command line
+
+# set temporary directories to the node's tmp space
+export TMPDIR=$SLURM_SCRATCH
+export TMP=$TMPDIR
+
+date # timestamp
+module load anaconda
+conda activate cutruntools2.1
+
+ARGS=( $@ ) # convert to array
+arg=${ARGS[$SLURM_ARRAY_TASK_ID]}
+cmd="command $arg -n $SLURM_NTASKS" # example command that uses the requested ntasks
+echo "$cmd"  
+#time eval $cmd
