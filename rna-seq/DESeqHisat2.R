@@ -98,3 +98,4 @@ ggplot(pcaData, aes(PC1, PC2, color=condition)) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
   coord_fixed()
+  
