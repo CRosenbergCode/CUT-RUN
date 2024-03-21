@@ -93,9 +93,10 @@ plotPCA(vsd, intgroup="condition")
 ## same thing using ggplot
 pcaData <- plotPCA(vsd, intgroup="condition", returnData=TRUE)
 percentVar <- round(100 * attr(pcaData, "percentVar"))
-ggplot(pcaData, aes(PC1, PC2, color=condition)) +
+ggplot(pcaData, aes(PC1, PC2, color=condition, label=rownames(pcaData))) +
   geom_point(size=3) +
-  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  geom_text(size=3, vjust=-0.5, hjust=0.5) +  # Add labels to points with some adjustments
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) + 
   coord_fixed()
   
