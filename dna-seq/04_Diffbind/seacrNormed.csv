@@ -1,0 +1,14 @@
+SampleID,Factor,Replicate,bamReads,Peaks,PeakCaller,Condition
+BFMe1,K9Me3,1,bams/SEACR/BF_Me_Rep1_S11_L006_.paired.sorted.bam,Peaks/Input/BF_Me_Rep1_S11_L006_.seacr.relaxed.bed,macs,BF
+BFMe2,K9Me3,2,bams/SEACR/BF_Me_Rep2_S13_L006_.paired.sorted.bam,Peaks/Input/BF_Me_Rep2_S13_L006_.seacr.relaxed.bed,macs,BF
+BFAc1,K27Ac,1,bams/SEACR/BF_Ac_Rep1_S10_L006_.paired.sorted.bam,Peaks/Input/BF_Ac_Rep1_S10_L006_.seacr.relaxed.bed,macs,BF
+BFAc2,K27Ac,2,bams/SEACR/BF_Ac_Rep2_S16_L006_.paired.sorted.bam,Peaks/Input/BF_Ac_Rep2_S16_L006_.seacr.relaxed.bed,macs,BF
+BFNeg1,Rabbit,1,bams/SEACR/BF_neg_Rep1_S12_L006_.paired.sorted.bam,Peaks/Input/BF_neg_Rep1_S12_L006_.seacr.relaxed.bed,macs,BF
+BFNeg2,Rabbit,2,bams/SEACR/BF_neg_Rep2_S6_L006_.paired.sorted.bam,Peaks/Input/BF_neg_Rep2_S6_L006_.seacr.relaxed.bed,macs,BF
+RVFVMe1,K9Me3,1,bams/SEACR/RVFV_Me_Rep1_S3_L006_.paired.sorted.bam,Peaks/Input/RVFV_Me_Rep1_S3_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVMe2,K9Me3,2,bams/SEACR/RVFV_Me_Rep2_S5_L006_.paired.sorted.bam,Peaks/Input/RVFV_Me_Rep2_S5_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVAc1_1,K27Ac,1,bams/SEACR/RVFV_Ac_Rep1-1_S9_L006_.paired.sorted.bam,Peaks/Input/RVFV_Ac_Rep1-1_S9_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVAc1_2,K27Ac,1,bams/SEACR/RVFV_Ac_Rep1-2_S17_L006_.paired.sorted.bam,Peaks/Input/RVFV_Ac_Rep1-2_S17_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVAc2,K27Ac,2,bams/SEACR/RVFV_Ac_Rep2_S14_L006_.paired.sorted.bam,Peaks/Input/RVFV_Ac_Rep2_S14_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVNeg1,Rabbit,1,bams/SEACR/RVFV_neg_Rep1_S4_L006_.paired.sorted.bam,Peaks/Input/RVFV_neg_Rep1_S4_L006_.seacr.relaxed.bed,macs,RVFV
+RVFVNeg2,Rabbit,2,bams/SEACR/RVFV_neg_Rep2_S15_L006_.paired.sorted.bam,Peaks/Input/RVFV_neg_Rep2_S15_L006_.seacr.relaxed.bed,macs,RVFV

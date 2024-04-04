@@ -1,0 +1,17 @@
+SampleID,Factor,Replicate,bamReads,Peaks,PeakCaller,Condition
+BFInput1,None,1,bams/Input_BF_rep1_S2_L006_.paired.bam,Peaks/AUCInput_BF_rep1_S2_L006_/Input_BF_rep1_S2_L006__summits.bed,macs,BF
+BFInput2,None,2,bams/Input_BF_rep2_S8_L006_.paired.bam,Peaks/AUCInput_BF_rep2_S8_L006_/Input_BF_rep2_S8_L006__summits.bed,macs,BF
+BFMe1,K9Me3,1,bams/BF_Me_Rep1_S11_L006_.paired.bam,Peaks/AUCBF_Me_Rep1_S11_L006_/BF_Me_Rep1_S11_L006__summits.bed,macs,BF
+BFMe2,K9Me3,2,bams/BF_Me_Rep2_S13_L006_.paired.bam,Peaks/AUCBF_Me_Rep2_S13_L006_/BF_Me_Rep2_S13_L006__summits.bed,macs,BF
+BFAc1,K27Ac,1,bams/BF_Ac_Rep1_S10_L006_.paired.bam,Peaks/AUCBF_Ac_Rep1_S10_L006_/BF_Ac_Rep1_S10_L006__summits.bed,macs,BF
+BFAc2,K27Ac,2,bams/BF_Ac_Rep2_S16_L006_.paired.bam,Peaks/AUCBF_Ac_Rep2_S16_L006_/BF_Ac_Rep2_S16_L006__summits.bed,macs,BF
+BFNeg1,Rabbit,1,bams/BF_neg_Rep1_S12_L006_.paired.bam,Peaks/AUCBF_neg_Rep1_S12_L006_/BF_neg_Rep1_S12_L006__summits.bed,macs,BF
+BFNeg2,Rabbit,2,bams/BF_neg_Rep2_S6_L006_.paired.bam,Peaks/AUCBF_neg_Rep2_S6_L006_/BF_neg_Rep2_S6_L006__summits.bed,macs,BF
+RVFVInput1,None,1,bams/Input_RVFV_rep1_S1_L006_.paired.bam,Peaks/AUCInput_RVFV_rep1_S1_L006_/Input_RVFV_rep1_S1_L006__summits.bed,macs,RVFV
+RVFVInput2,None,2,bams/Input_RVFV_rep2_S7_L006_.paired.bam,Peaks/AUCInput_RVFV_rep2_S7_L006_/Input_RVFV_rep2_S7_L006__summits.bed,macs,RVFV
+RVFVMe1,K9Me3,1,bams/RVFV_Me_Rep1_S3_L006_.paired.bam,Peaks/AUCRVFV_Me_Rep1_S3_L006_/RVFV_Me_Rep1_S3_L006__summits.bed,macs,RVFV
+RVFVMe2,K9Me3,2,bams/RVFV_Me_Rep2_S5_L006_.paired.bam,Peaks/AUCRVFV_Me_Rep2_S5_L006_/RVFV_Me_Rep2_S5_L006__summits.bed,macs,RVFV
+RVFVAc1,K27Ac,1,bams/RVFV_Ac_Rep1-2_S17_L006_.paired.bam,Peaks/AUCRVFV_Ac_Rep1-2_S17_L006_/RVFV_Ac_Rep1-2_S17_L006__summits.bed,macs,RVFV
+RVFVAc2,K27Ac,2,bams/RVFV_Ac_Rep2_S14_L006_.paired.bam,Peaks/AUCRVFV_Ac_Rep2_S14_L006_/RVFV_Ac_Rep2_S14_L006__summits.bed,macs,RVFV
+RVFVNeg1,Rabbit,1,bams/RVFV_neg_Rep1_S4_L006_.paired.bam,Peaks/AUCRVFV_neg_Rep1_S4_L006_/RVFV_neg_Rep1_S4_L006__summits.bed,macs,RVFV
+RVFVNeg2,Rabbit,2,bams/RVFV_neg_Rep2_S15_L006_.paired.bam,Peaks/AUCRVFV_neg_Rep2_S15_L006_/RVFV_neg_Rep2_S15_L006__summits.bed,macs,RVFV

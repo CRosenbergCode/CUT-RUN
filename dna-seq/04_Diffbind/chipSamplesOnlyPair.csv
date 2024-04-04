@@ -1,0 +1,14 @@
+SampleID,Factor,Replicate,bamReads,Peaks,PeakCaller,Condition
+BFMe1,K9Me3,1,bams/PairedEndOnly/BF_Me_Rep1_S11_L006_.bam,Peaks/macs2PairedOnly/BF_Me_1/BF_Me_1_peaks.broadPeak,macs,BF
+BFMe2,K9Me3,2,bams/PairedEndOnly/BF_Me_Rep2_S13_L006_.bam,Peaks/macs2PairedOnly/BF_Me_2/BF_Me_2_peaks.broadPeak,macs,BF
+BFAc1,K27Ac,1,bams/PairedEndOnly/BF_Ac_Rep1_S10_L006_.bam,Peaks/macs2PairedOnly/BF_Ac_1/BF_Ac_1_summits.bed,macs,BF
+BFAc2,K27Ac,2,bams/PairedEndOnly/BF_Ac_Rep2_S16_L006_.bam,Peaks/macs2PairedOnly/BF_Ac_2/BF_Ac_2_summits.bed,macs,BF
+BFNeg1,Rabbit,1,bams/PairedEndOnly/BF_neg_Rep1_S12_L006_.bam,Peaks/macs2PairedOnly/BF_Neg_1/BF_Neg_1_peaks.broadPeak,macs,BF
+BFNeg2,Rabbit,2,bams/PairedEndOnly/BF_neg_Rep2_S6_L006_.bam,Peaks/macs2PairedOnly/BF_Neg_2/BF_Neg_2_peaks.broadPeak,macs,BF
+RVFVMe1,K9Me3,1,bams/PairedEndOnly/RVFV_Me_Rep1_S3_L006_.bam,Peaks/macs2PairedOnly/RVFV_Me_1/RVFV_Me_1_peaks.broadPeak,macs,RVFV
+RVFVMe2,K9Me3,2,bams/PairedEndOnly/RVFV_Me_Rep2_S5_L006_.bam,Peaks/macs2PairedOnly/RVFV_Me_2/RVFV_Me_2_peaks.broadPeak,macs,RVFV
+RVFVAc1_1,K27Ac,1,bams/PairedEndOnly//RVFV_Ac_Rep1-1_S9_L006_.bam,Peaks/macs2PairedOnly/RVFV_Ac_1_1/RVFV_Ac_1_summits.bed,macs,RVFV
+RVFVAc1_2,K27Ac,1,bams/PairedEndOnly//RVFV_Ac_Rep1-2_S17_L006_.bam,Peaks/macs2PairedOnly/RVFV_Ac_1_2/RVFV_Ac_1_summits.bed,macs,RVFV
+RVFVAc2,K27Ac,2,bams/PairedEndOnly/RVFV_Ac_Rep2_S14_L006_.bam,Peaks/macs2PairedOnly/RVFV_Ac_2/RVFV_Ac_2_summits.bed,macs,RVFV
+RVFVNeg1,Rabbit,1,bams/PairedEndOnly/RVFV_neg_Rep1_S4_L006_.bam,Peaks/macs2PairedOnly/RVFV_Neg_1/RVFV_Neg_1_peaks.broadPeak,macs,RVFV
+RVFVNeg2,Rabbit,2,bams/PairedEndOnly/RVFV_neg_Rep2_S15_L006_.bam,Peaks/macs2PairedOnly/RVFV_Neg_2/RVFV_Neg_2_peaks.broadPeak,macs,RVFV
