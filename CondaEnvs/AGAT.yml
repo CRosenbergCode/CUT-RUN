@@ -1,0 +1,6 @@
+name: AGAT
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+prefix: /projects/.colostate.edu/haogg/software/anaconda/envs/AGAT

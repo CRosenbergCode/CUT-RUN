@@ -1,0 +1,9 @@
+AGAT: Basically just the AGAT tool, which can help format GTF/GFF files and deal with them cleanly
+
+CUTRUNTOOLS2.1: Most of the dna side of the CUTRUN pipeline
+
+RNAPseudo: The RNA side of the CUTRUN pipeline (has Trinity, Salmon, and Hisat-2 as aligners)
+
+RNAQC: A few packages for getting qc metrics on RNAseq data, haven't used this one much but was looking at a couple tools
+
+Deeptools_kernel: Basically just deeptools, so dealing with bigwig files for viewing genome data for CUTRUN
