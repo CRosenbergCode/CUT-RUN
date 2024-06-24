@@ -2,30 +2,39 @@
 
 # Define the data
 A3SS_data <- data.frame(
-  category = c("DIV", "RRTT"),
-  proportion = c(4/5, 1/5)
+  category = c("DIV", "TRP", "RRTT"),
+  proportion = c(3/5, 1/5, 1/5)
 )
 
+A3SS_colors <- c("DIV" = "#A6CEE3",
+                 "TRP" = "#B3E2CD",
+                 "RRTT" = "#FDBF6F")
+
 A5SS_data <- data.frame(
-  category = c("DIV", "RRTT"),
+  category = c("IMM", "RRTT"),
   proportion = c(1/2, 1/2)
 )
 
+A5SS_colors <- c("IMM" = "#FFDFD3",
+                 "RRTT" = "#FDBF6F")
+
 RI_data <- data.frame(
-  category = "PROT",
+  category = "Sig",
   proportion = 1
 )
 
+RI_colors <- c("Sig" = "#CAB2D6")
+
 SE_data <- data.frame(
-  functional_category = c("Diverse function", "Unknown function", "Proteolysis or proteosomal activity", "Replication & (DNA) repair", "Transport"),
-  proportion = c(1/6, 2/6, 1/6, 1/6, 1/6)
+  functional_category = c("Diverse function", "Anti-microbial peptide", "Signal transduction", "Replication & DNA repair", "Transport"),
+  proportion = c(1/6, 1/6, 1/6, 2/6, 1/6)
 )
 
 # define custom colors for the categories
 SE_colors <- c("Diverse function" = "#A6CEE3",
-               "Unknown function" = "#F4CAE4",
-               "Proteolysis or proteosomal activity" = "#FDBF6F",
-               "Replication & (DNA) repair" = "#CAB2D6",
+               "Anti-microbial peptide" = "#FFDFD3",
+               "Signal transduction" = "#CAB2D6",
+               "Replication & DNA repair" = "#FDBF6F",
                "Transport" = "#B3E2CD")
 
 # Create the horizontal bar plots
@@ -85,6 +94,5 @@ p4 <- ggplot(SE_data,aes(x = "SE", y = proportion, fill = functional_category)) 
         plot.margin = margin(t = -50, b = -50)) + 
   labs(fill = "Gene Functional Categories")
 
-# combine plots
 combined_plot <- p1 / p2 / p3 / p4 + plot_layout(guides = "collect", heights = unit(rep(0.8, 4), "inches"))
 print(combined_plot)
