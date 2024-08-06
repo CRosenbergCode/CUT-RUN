@@ -11,7 +11,7 @@
 #SBATCH --mail-user=hunter.ogg@colostate.edu
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
 macs2 callpeak -t hisatOnlyPaired/BF_Ac_Rep1_S10_L006_.bam \

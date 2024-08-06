@@ -21,6 +21,6 @@ do
   bamCoverage --bam ${FILE} -o bin10/${pref}.bw \
       --binSize 10 \
       --normalizeUsing RPGC \
-      --effectiveGenomeSize 12200000000 \
+      --effectiveGenomeSize 1220000000 \ #Current size is for Aedes Aegypti
       --extendReads 
 done
