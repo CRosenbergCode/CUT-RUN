@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
+#SBATCH --partition=day-long-cpu
 #SBATCH --job-name=hisatEColiBuild
 #SBATCH --output=%x.%j.out
 #SBATCH --time=1:00:00

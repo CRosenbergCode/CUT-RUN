@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --nodes=1
-#SBATCH --ntasks=32
-#SBATCH --time=72:00:00
+#SBATCH --ntasks=50
+#SBATCH --time=128:00:00
 #SBATCH --qos=normal
 #SBATCH --partition=week-long-cpu
 #SBATCH --job-name=HisatArrayCxt
@@ -28,7 +28,6 @@ do
     then
       TWO=${line/_R1_/_R2_}
       OUT=${TWO:16:(${#TWO}-25)} #Remove trimmed, and end. 23 is 8 (trimmed.) + 15 (R1_001$
-      echo ${TWO}
       echo $OUT
       #STRANDNESS MAY NEED TO CHANGE FOR DIFFERENT LIBRARY PREP KITS
       #Does not matter for DNA :D

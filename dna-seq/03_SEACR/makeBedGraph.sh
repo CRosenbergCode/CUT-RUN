@@ -8,10 +8,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=haogg@colostate.edu
+#SBATCH --mail-user=$USER
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
 
