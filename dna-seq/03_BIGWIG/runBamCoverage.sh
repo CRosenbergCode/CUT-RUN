@@ -7,7 +7,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=haogg@colostate.edu
+#SBATCH --mail-user=$USER
 
 module purge
 module load anaconda
@@ -22,5 +22,6 @@ do
       --binSize 10 \
       --normalizeUsing RPGC \
       --effectiveGenomeSize 12200000000 \
-      --extendReads 
+      --extendReads
 done
+#Adjust --binSize to adjust how granular the result bigwig file is, higher is lower resolution

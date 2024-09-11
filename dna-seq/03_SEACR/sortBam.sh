@@ -15,7 +15,7 @@ module load anaconda
 conda activate rnaPseudo
 
 
-for FILE in ../hisatSam/*.bam
+for FILE in ../02_hisat2/*.bam
 do
   EXT=${FILE:12:-4}
   echo $EXT
