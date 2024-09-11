@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
-#SBATCH --job-name=sortBam
+#SBATCH --partition=day-long-cpu
+#SBATCH --job-name=SEACRMakeBedgraph
 #SBATCH --output=%x.%j.out
 #SBATCH --time=2:00:00
 #SBATCH --qos=normal
@@ -11,7 +11,7 @@
 #SBATCH --mail-user=$USER
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
 

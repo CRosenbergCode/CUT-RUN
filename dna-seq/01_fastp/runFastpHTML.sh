@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
+#SBATCH --partition=day-long-cpu
 #SBATCH --job-name=fastpLoop
 #SBATCH --output=%x.%j.out
 #SBATCH --time=1:00:00
@@ -11,7 +11,7 @@
 #SBATCH --mail-user=$USER
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
 for FILE in raw/*R1_001.fastq.gz
