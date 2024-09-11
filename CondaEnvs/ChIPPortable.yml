@@ -1,0 +1,22 @@
+name: chipPort
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.6
+  - bowtie2
+  - samtools
+  - macs2
+  - bedops
+  - bedtools
+  - deeptools
+  - parallel
+  - tabix
+  - python-igraph
+  - fastp
+  - bioconda::hisat2
+  - bioconda::gffread
+  - salmon
+  - bioconda::trinity
+prefix: /projects/.colostate.edu/haogg/software/anaconda/envs/chipPort
