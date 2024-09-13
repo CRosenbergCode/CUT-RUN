@@ -1,4 +1,4 @@
-Purpose- Aligns trimmed fastq reads to a reference genome or transcriptome. In this case the Aedes aegypti is aligned against an input genome.
+Purpose- Hisat2 aligns trimmed fastq reads to a reference genome or transcriptome. In this case the Aedes aegypti is aligned against an input genome.
 Input- fastq.gz
 Output- SAM, which is then converted to BAM 
 Requires the following files: 
