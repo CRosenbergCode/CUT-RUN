@@ -67,7 +67,7 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
   #sigResDF = head(resDF,n=25,stringsAsFactors=FALSE)
   if(saving){
     if(CSV){
-      write.csv(resDF,paste(namesOne,"vs",namesTwo,".RDS",sep=""), row.names=FALSE)
+      write.csv(resDF,paste(namesOne,"vs",namesTwo,".csv",sep=""), row.names=FALSE)
     }
     saveRDS(resDF,paste(namesOne,"vs",namesTwo,".RDS",sep=""))
   }
