@@ -24,7 +24,7 @@ do
   TRIM1="trimmed/trimmed."$(basename $FILE)
   TRIM2="trimmed/trimmed."$(basename $TWO)
   # fastp uses 16 threads max (version 0.23.4)
-  cmd="fastp -i ${FILE} -I ${TWO} -o ${TRIM1} -O ${TRIM2} -h htmls/$(basename $TWO).html -w $((SLURM_NTASKS-1)) --dedup"
+  cmd="fastp -i ${FILE} -I ${TWO} -o ${TRIM1} -O ${TRIM2} -h htmls/$(basename $TWO).html -j htmls/$(basename $TWO).json -w $((SLURM_NTASKS-1)) --dedup"
   echo $cmd
   time eval $cmd
 done
