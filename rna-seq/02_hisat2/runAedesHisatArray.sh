@@ -19,16 +19,27 @@ date # timestamp
 
 filename=AedesTrimmed.txt # $1
 
+#Run this first to generate a list of files.
+#ls | grep -v / | grep ".fastq.gz" | grep "R1" | grep "trimmed" >> AedesTrimmed.txt
+
+# to run this script use
+#sbatch --array=0-<N> <script.sh>
+#Where N is the number of lines in your AedesTrimmed.txt file minus 1. You can get that easily using the following command
+#wc -l AedesTrimmed.txt
+#sbatch --array=0-25 runAedesHisatArray.sh
+
 linenum=0
 while read -r line
 do
     if [ $SLURM_ARRAY_TASK_ID -eq $linenum ]
     then
+
       TWO=${line/_R1_/_R2_}
-      OUT=${TWO:16:(${#TWO}-25)} #Remove trimmed, and end. 23 is 8 (trimmed.) + 15 (R1_001$
+      prefix="../01_Fastp/DeDupTrimmed/DeDupTrimmed."
+      OUT=${TWO#$prefix}
       echo ${TWO}
       echo $OUT
-      hisat2 --phred33 --rna-strandness RF -p 100 -x AedesTranscriptome68 -1 ${line} -2 ${TWO} -S AeAeHisat/$OUT.sam
+      hisat2 --phred33 --rna-strandness RF -p 100 -x HisatIndex/AedesTranscriptome68 -1 ${line} -2 ${TWO} -S HisatAligned/$OUT.sam
     fi
     linenum=$((linenum + 1))
 done < $filename

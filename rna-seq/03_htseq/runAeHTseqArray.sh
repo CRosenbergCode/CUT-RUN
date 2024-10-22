@@ -17,20 +17,18 @@ conda activate rnaPseudo
 
 date # timestamp
 
-filename=ConcordantAedesHisat.txt # $1
+filename=AedesAligned.txt # $1
 
 linenum=0
 while read -r line
 do
     if [ $SLURM_ARRAY_TASK_ID -eq $linenum ]
     then
-      pref=${line/AeAeConcordant\//hsCountsConcordantAAe\/}
+      pref=${line/..\/02_Hisat2\/HisatAligned\//hsCountsAedes\/}
       suff=${pref/.bam/.HSCounts.txt}
-      #pref=${line::-4}
-      #pref=${pref:9}#
       echo ${pref}
       echo ${suff}
-      htseq-count --stranded=yes $line 68genes.gtf > $suff
+      htseq-count --stranded=reverse $line 68genes.gtf > $suff
     fi
     linenum=$((linenum + 1))
 done < $filename
