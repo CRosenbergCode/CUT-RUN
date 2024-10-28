@@ -1,0 +1,6 @@
+.DS_Store
+*.fastq
+*.fastq.gz
+# fastp output
+*.html
+*.json

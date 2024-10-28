@@ -14,11 +14,13 @@ source activate base
 conda activate rnaPseudo
 
 date # timestamp
+nthreads=$(($SLURM_NTASKS - 1))
+
 
 linenum=0
 for file in *.sam
 do
   TWO=${file/.sam/.bam}
   echo ${TWO}
-  samtools view -bS -@15 $file > $TWO
+  samtools sort -@$nthreads <(samtools view -bS -@$nthreads $file)  > $TWO
 done
