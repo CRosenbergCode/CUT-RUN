@@ -3,3 +3,5 @@ Input- MACS2 output peak files, .bam files, bam indexes(.bai), .bed file outputs
 
 
 Output- .csv files. Use the adjusted p value, which has applied a multiple testing adjustment.
+
+THe RNAREgulatoryRegionExtract.R file is used to pull promoter regions of interest from a list of GOIs.
