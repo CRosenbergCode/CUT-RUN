@@ -4,3 +4,6 @@
 # fastp output
 *.html
 *.json
+.Rproj.user
+*.Rproj
+.Rhistory
