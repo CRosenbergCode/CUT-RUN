@@ -1,25 +1,31 @@
 library(readr)
-setwd("C:\\Users\\hunte\\Desktop\\ChipData")
+setwd("C:\\Users\\zkrahuma\\Documents\\CUT-RUN\\dna-seq\\04_Diffbind")
 options(readr.show_col_types = FALSE)
 
 getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName="ChIP",distance=1000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE){
   
   rnaDF=as.data.frame(readr::read_tsv(bedFile,col_names=FALSE),stringsAsFactors=FALSE,show_co)
-  rnaNames=as.list(rnaDF[10][,])
-  length(rnaNames)
+  # rnaNames=as.list(rnaDF[10][,])
+  # length(rnaNames)
 
-  sigResDF=read.csv("AcvsOthersDiffPeaks.csv")#diffPeakFile)
+  sigResDF=read.csv(diffPeakFile)
 
-  rnaStart=as.list(rnaDF[2][,])
-  rnaEnd=as.list(rnaDF[3][,])
-  rnaChrom=as.list(rnaDF[1][,])
+  # rnaStart=as.list(rnaDF[2][,])
+  rnaStart=rnaDF[[2]]
+  #rnaEnd=as.list(rnaDF[3][,])
+  rnaEnd=rnaDF[[3]]
+  #rnaChrom=as.list(rnaDF[1][,])
+  rnaChrom=rnaDF[[1]]
   
-  dnaStart=as.list(sigResDF[2][,])
-  dnaEnd=as.list(sigResDF[3][,])
+  #dnaStart=as.list(sigResDF[2][,])
+  dnaStart=sigResDF$start
+  #dnaEnd=as.list(sigResDF[3][,])
+  dnaEnd=sigResDF$end
   #print(dnaStart)
   #print(dnaEnd)
   
-  dnaChrom=as.character(sigResDF[1][,])
+  #dnaChrom=as.character(sigResDF[1][,])
+  dnaChrom=sigResDF$chr
   
   withinDist=rep(FALSE,length(rnaChrom)*length(dnaStart))
   dnaDist=rep(0,length(rnaChrom)*length(dnaStart))
@@ -42,7 +48,7 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
           print(paste("DNA Peak number",j))
           print(paste("Start of DNA Peak:",toString(dnaStart[j])))
           print(paste("End of DNA Peak:",toString(dnaEnd[j])))
-          print(rnaNames[i])
+          # print(rnaNames[i])
           print(paste("Start of Gene:",toString(rnaStart[i])))
           cat(paste("End of Gene",toString(rnaEnd[i]),"\n\n"))
         }
@@ -66,7 +72,7 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
         if((nearEnd) && (dist<distance)){#1e3){
           if(verbose){
             print("RNA")
-            print(rnaNames[i])
+            # print(rnaNames[i])
             #print(i)
             print("Distance is")
             print(dist)
@@ -121,7 +127,8 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
     geneOrient[i]=rnaDF[k,6]
     geneStart[i]=rnaDF[k,2]
     geneEnd[i]=rnaDF[k,3]
-    rnaTitle[i]=rnaDF[k,10]
+    #rnaTitle[i]=rnaDF[k,10]
+    rnaTitle[i]=rnaDF[k,4]
   }
 
   #print("Here 2")
@@ -162,12 +169,13 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
 #grep("AAEL[0-9]+",sample)
 
 
-#test = getGeneDistances("AedesGenes.bed","macs2EDGER_Ac.csv",topN=200,verbose=FALSE)
+test = getGeneDistances("DEgenes_3days.bed2","SFvsBF-d3-Ac-Greylist1 (-SFAc3).csv",topN=200,verbose=FALSE)
+write.table(test, "DEgenes_3days_SFvsBF-Ac-Greylist1-SFAc3.tsv", sep = "\t", col.names = TRUE, quote=F, row.names=FALSE)
 #getGeneDistances("sig48RNA.bed","seacrEDGER_Ac.csv",verbose=TRUE,distance=10000)
 #test = getGeneDistances("AedesGenes.bed","macs2EDGER_Ac.csv",topN=400,verbose=FALSE)
 #seacrTest = getGeneDistances("AedesGenes.bed","seacrEDGER_Ac.csv",topN=700,verbose=FALSE,inGene = FALSE,distance=1e4)
 
-SpencerFrame2 = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",topN=100,verbose=FALSE)
+SpencerFrame2 = getGeneDistances("DEgenes_3days.bed","AcvsOthersDiffPeaks.csv",topN=100,verbose=FALSE)
 
 test = SpencerFrame2[,5]
 
