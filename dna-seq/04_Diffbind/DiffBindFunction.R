@@ -10,7 +10,7 @@
 #BiocManager::install("edgeR")
 #BiocManager::install("Repitools")
 
-setwd("C:\\Users\\hunte\\Desktop\\ChipData")
+setwd("C:\\Users\\hunte\\Desktop\\AltChip")
 library(BiocParallel)
 register(SerialParam())
 library(DiffBind)
@@ -21,7 +21,7 @@ library(Repitools)
 #samples <- read.csv('chipSamples2_28_24.csv')
 
 runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
-                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE){
+                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE,blacklist=c()){
   #contrastOnly <- dba.contrast(normOnly, minMembers=2)
   
   #resultOnly <- dba.count(dbOnly,summits = FALSE)#,summits=20000)
@@ -33,6 +33,9 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
   else{
     samplesOnly <- read.csv(sampleFile)
     dbOnly <- dba(sampleSheet=samplesOnly) #scoreCol=5
+    if(length(blacklist)>0){
+      dbOnly=dba.blacklist(dbOnly,blacklist=greylist@regions,greylist=greylist@regions)
+    }
     resultOnly <- dba.count(dbOnly,summits=summits)
     #saveRDS(resultOnly,file="onlyPeakCounts.RDS")
     if(saving){
@@ -69,23 +72,31 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
     if(CSV){
       write.csv(resDF,paste(namesOne,"vs",namesTwo,".csv",sep=""), row.names=FALSE)
     }
-    saveRDS(resDF,paste(namesOne,"vs",namesTwo,".RDS",sep=""))
+    #Change to before to allow different contrasts?
+    saveRDS(contrastOnly,paste(namesOne,"vs",namesTwo,".RDS",sep=""))
   }
   
   if(plotting){
+    
     par("mar")
     par(mar=c(1,1,1,1))
     analizOnly
+    #Error handling?
     dba.plotVenn(analizOnly,contrast=1,method=DBA_ALL_METHODS)
     
+    #Good
     dba.plotPCA(analizOnly,  attributes=DBA_FACTOR, label=DBA_ID)
-    
+
+    #Good
     plot(analizOnly)
     
+    #Error handling?
     dba.plotVolcano(analizOnly)
     
+    #Error handling?
     dba.plotMA(analizOnly, method=DBA_DESEQ2)
     
+    #?
     dba.plotMA(analizOnly, bXY=TRUE)
     
     plot(olap.rate,type='b',ylab='# peaks', xlab='Overlap at least this many peaksets')
@@ -93,14 +104,10 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
   return(resDF)
 }
 
+greylist=readRDS("RVFV_BF_6_SampGreylist_0.95.RDS")
 
-runDiffbind(sampleFile="chipSamplesOnlyPair.csv",samples1 = c(1:3),samples2=c(4:6))
+runDiffbind(sampleFile="ChipSamplesNoControlAc.csv",samples1 = c(1:3),samples2=c(4:6),blacklist = greylist)
 
-test=readRDS("Condition1vsCondition2.RDS")
-
-runDiffbind(sampleFile="Condition1vsCondition2PeakCounts.RDS",fromFile = TRUE)
-
-testFile=readRDS("Condition1 vs Condition2")
 #
 #
 #It is highly recommend to save
