@@ -36,8 +36,8 @@ subsetGeneNameHelper = function(gtfFrame,namesVec,savename=""){
   }
   print(sum(subsetArr))
   newDF=gtfFrame[subsetArr,]
-  if(length(saveName)>0){
-    write.table(newDF,file=saveName,quote=FALSE, sep='\t', col.names = FALSE,row.names=FALSE)
+  if(length(savename)>0){
+    write.table(newDF,file=savename,quote=FALSE, sep='\t', col.names = FALSE,row.names=FALSE)
   }
   return(newDF)
 }
@@ -46,7 +46,7 @@ subsetGeneNameHelper = function(gtfFrame,namesVec,savename=""){
 #Called by subsetGenesDeseq after it chooses genes to retain
 #If savename is provided, the resulting gtf will be saved with that name to the current working directory
 
-subsetGeneName = function(gtfFrame,namesVec,samename=""){
+subsetGeneName = function(gtfFrame,namesVec,savename=""){
   return(subsetGeneNameHelper(gtfFrame,row.names(namesVec),savename=savename))
 }
 
