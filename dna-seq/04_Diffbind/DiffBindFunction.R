@@ -22,11 +22,6 @@ library(Repitools)
 
 runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
                        namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE,blacklist=c()){
-  #contrastOnly <- dba.contrast(normOnly, minMembers=2)
-  
-  #resultOnly <- dba.count(dbOnly,summits = FALSE)#,summits=20000)
-  #if
-  #saveRDS(resultOnly,file="onlySummitFalseCounts.RDS")
   if(fromFile){
     contrastOnly=readRDS(sampleFile)
   }
@@ -37,37 +32,27 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
       dbOnly=dba.blacklist(dbOnly,blacklist=greylist@regions,greylist=greylist@regions)
     }
     resultOnly <- dba.count(dbOnly,summits=summits)
-    #saveRDS(resultOnly,file="onlyPeakCounts.RDS")
     if(saving){
       saveRDS(resultOnly,file=paste(namesOne,"vs",namesTwo,"PeakCounts.RDS",sep = ""))
     }
-    #resultOnly=readRDS("onlyPeakCounts.RDS")
-    #resultOnly
     testPeaks=dba.peakset(resultOnly)
     normOnly <- dba.normalize(resultOnly)
     contrastOnly <- dba.contrast(normOnly,group1=samples1, group2=samples2,
                                  name1=namesOne, name2=namesTwo,minMembers = 2)
   }
-
+  
   analizOnly <- dba.analyze(contrastOnly,method=DBA_ALL_METHODS,bBlacklist = FALSE,bGreylist = FALSE)
-
-  #analiz <- dba.analyze(contrastOnly,method=DBA_ALL_METHODS)
-
-  #pvals <- dba.plotBox(analizOnly)
+  
+  
   if(edger){
     res_deseq <- dba.report(analizOnly, method=DBA_EDGER, contrast = 1, th=1)
   }
   else{
     res_deseq <- dba.report(analizOnly, method=DBA_DESEQ2, contrast = 1, th=1)
   }
-
-  #head(n=25,res_deseq)
-  
-  #head(res_deseq,n=9)
   
   resDF = annoGR2DF(res_deseq)
   
-  #sigResDF = head(resDF,n=25,stringsAsFactors=FALSE)
   if(saving){
     if(CSV){
       write.csv(resDF,paste(namesOne,"vs",namesTwo,".csv",sep=""), row.names=FALSE)
@@ -77,29 +62,34 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
   }
   
   if(plotting){
-    
-    par("mar")
-    par(mar=c(1,1,1,1))
-    analizOnly
-    #Error handling?
-    dba.plotVenn(analizOnly,contrast=1,method=DBA_ALL_METHODS)
-    
-    #Good
-    dba.plotPCA(analizOnly,  attributes=DBA_FACTOR, label=DBA_ID)
-
-    #Good
-    plot(analizOnly)
-    
-    #Error handling?
-    dba.plotVolcano(analizOnly)
-    
-    #Error handling?
-    dba.plotMA(analizOnly, method=DBA_DESEQ2)
-    
-    #?
-    dba.plotMA(analizOnly, bXY=TRUE)
-    
-    plot(olap.rate,type='b',ylab='# peaks', xlab='Overlap at least this many peaksets')
+    tryCatch(     
+      expr = {
+        par("mar")
+        par(mar=c(1,1,1,1))
+        #Error handling?
+        dba.plotVenn(analizOnly,contrast=1,method=DBA_ALL_METHODS)
+        
+        #Good
+        dba.plotPCA(analizOnly,  attributes=DBA_FACTOR, label=DBA_ID)
+        
+        #Good
+        plot(analizOnly)
+        
+        #Error handling?
+        dba.plotVolcano(analizOnly)
+        
+        #Error handling?
+        if(edger==TRUE){
+          dba.plotMA(analizOnly, method=DBA_EDGER)
+        }
+        else{
+          dba.plotMA(analizOnly, method=DBA_DESEQ2)
+        }
+      },
+      error = function(e){          
+        print("Error: Too few significant peaks too properly plot.")
+      }
+    )
   }
   return(resDF)
 }
