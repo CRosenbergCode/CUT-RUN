@@ -21,7 +21,7 @@ library(Repitools)
 #samples <- read.csv('chipSamples2_28_24.csv')
 
 runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
-                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE,blacklist=c()){
+                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=FALSE,blacklist=c()){
   if(fromFile){
     contrastOnly=readRDS(sampleFile)
   }
