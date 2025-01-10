@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
+#SBATCH --partition=day-long-cpu
 #SBATCH --job-name=sortBamSEACR
 #SBATCH --output=%x.%j.out
 #SBATCH --time=2:00:00
@@ -11,13 +11,17 @@
 #SBATCH --mail-user=$USER
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
+#This file sorts bams based on NAME, as required by subsequent steps of the process.
+#THIS MUST BE RUN EVEN IF HISAT OUTPUT WAS PREVIOUSLY SORTED, AS THE SORTING METHOD IS DIFFERENT
 
-for FILE in ../02_hisat2/*.bam
+#Place
+
+for FILE in *.bam
 do
-  EXT=${FILE:12:-4}
+  EXT=${FILE::-4}
   echo $EXT
-  #samtools sort -N -@ 8 $FILE -o $EXT.Read.bam
+  samtools sort -n -@ 8 $FILE -o $EXT.Read.bam
 done
