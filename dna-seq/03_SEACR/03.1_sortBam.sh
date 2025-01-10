@@ -14,8 +14,12 @@ module purge
 source activate base
 conda activate rnaPseudo
 
+#This file sorts bams based on NAME, as required by subsequent steps of the process.
+#THIS MUST BE RUN EVEN IF HISAT OUTPUT WAS PREVIOUSLY SORTED, AS THE SORTING METHOD IS DIFFERENT
 
-for FILE in ../AcBams/*.bam
+#Place
+
+for FILE in *.bam
 do
   EXT=${FILE::-4}
   echo $EXT
