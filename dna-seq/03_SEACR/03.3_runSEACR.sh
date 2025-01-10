@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
-#SBATCH --job-name=MACS2PeakCall
+#SBATCH --partition=day-long-cpu
+#SBATCH --job-name=SEACRAgoD1
 #SBATCH --output=%x.%j.out
-#SBATCH --time=2:00:00
+#SBATCH --time=4:00:00
 #SBATCH --qos=normal
 #SBATCH --nodes=1
-#SBATCH --ntasks=2
+#SBATCH --ntasks=8
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=$USER
 
@@ -33,8 +33,47 @@ conda activate rnaPseudo
 
 #'relaxed' allows for more peaks, calls the
 
-SEACR_1.3.sh target.bedgraph IgG.bedgraph norm stringent output
+bash SEACR_1.3.sh trimmed_BF-d1-rep1AGo2_R2_001.fragments.bedgraph trimmed_BF-d1-rep1input_R2_001.fragments.bedgraph norm relaxed BF_Ago2_D1_Rep1.relaxed.bed
 
-SEACR_1.3.sh target.bedgraph IgG.bedgraph non relaxed output
+bash SEACR_1.3.sh trimmed_BF-d1-rep2AGo2_R2_001.fragments.bedgraph trimmed_BF-d1-rep2-input_R2_001.fragments.bedgraph norm relaxed BF_Ago2_D1_Rep2.relaxed.bed
 
-SEACR_1.3.sh target.bedgraph 0.01 non stringent output
+bash SEACR_1.3.sh trimmed_SF-d1-rep1AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep1-input_R2_001.fragments.bedgraph norm relaxed SF_Ago2_D1_Rep1.relaxed.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep2AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep2-input_R2_001.fragments.bedgraph norm relaxed SF_Ago2_D1_Rep2.relaxed.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep3AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep3-input_R2_001.fragments.bedgraph norm relaxed SF_Ago2_D1_Rep3.relaxed.bed
+
+bash SEACR_1.3.sh trimmed_BF-d1-rep4-Ago2-60_R2_001.fragments.bedgraph trimmed_BF-d1-rep3-input_R2_001.fragments.bedgraph norm relaxed BF_Ago2_D1_Rep4.relaxed.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep4-Ago2-60_R2_001.fragments.bedgraph trimmed_SF-d1-rep3-input_R2_001.fragments.bedgraph norm relaxed SF_Ago2_D1_Rep4.relaxed.bed
+
+
+
+
+
+bash SEACR_1.3.sh trimmed_BF-d1-rep1AGo2_R2_001.fragments.bedgraph trimmed_BF-d1-rep1input_R2_001.fragments.bedgraph norm stringent BF_Ago2_D1_Rep1.stringent.bed
+
+bash SEACR_1.3.sh trimmed_BF-d1-rep2AGo2_R2_001.fragments.bedgraph trimmed_BF-d1-rep2-input_R2_001.fragments.bedgraph norm stringent BF_Ago2_D1_Rep2.stringent.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep1AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep1-input_R2_001.fragments.bedgraph norm stringent SF_Ago2_D1_Rep1.stringent.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep2AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep2-input_R2_001.fragments.bedgraph norm stringent SF_Ago2_D1_Rep2.stringent.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep3AGo2_R2_001.fragments.bedgraph trimmed_SF-d1-rep3-input_R2_001.fragments.bedgraph norm stringent SF_Ago2_D1_Rep3.stringent.bed
+
+bash SEACR_1.3.sh trimmed_BF-d1-rep4-Ago2-60_R2_001.fragments.bedgraph trimmed_BF-d1-rep3-input_R2_001.fragments.bedgraph norm stringent BF_Ago2_D1_Rep4.stringent.bed
+
+bash SEACR_1.3.sh trimmed_SF-d1-rep4-Ago2-60_R2_001.fragments.bedgraph trimmed_SF-d1-rep3-input_R2_001.fragments.bedgraph norm stringent SF_Ago2_D1_Rep4.stringent.bed
+
+#SEACR_1.3.sh target.bedgraph IgG.bedgraph non relaxed output
+
+#SEACR_1.3.sh target.bedgraph 0.01 non stringent output
+
+#trimmed_BF-d1-rep1AGo2_R2_001.paired.bam
+#03.3_runSEACR.sh             trimmed_BF-d1-rep1AGo2_R2_001.fragments.bedgraph
+#genome.fa                    trimmed_BF-d1-rep1input_R2_001.fragments.bedgraph
+#SEACR_1.3.R                  trimmed_BF-d1-rep2AGo2_R2_001.fragments.bedgraph
+#SEACR_1.3.sh                 trimmed_SF-d1-rep1AGo2_R2_001.fragments.bedgraph
+#SEACR_Directions.md          trimmed_SF-d1-rep1-input_R2_001.fragments.bedgraph
+#SEACRMakeBedgraph.31608.out  trimmed_SF-d1-rep2AGo2_R2_001.fragments.bedgraph
+#SEACRMakeBedgraph.31609.out  trimmed_SF-d1-rep3AGo2_R2_001.fragments.bedgraph

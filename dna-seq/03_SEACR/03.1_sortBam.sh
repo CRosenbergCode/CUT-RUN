@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=amilan
+#SBATCH --partition=day-long-cpu
 #SBATCH --job-name=sortBamSEACR
 #SBATCH --output=%x.%j.out
 #SBATCH --time=2:00:00
@@ -11,13 +11,13 @@
 #SBATCH --mail-user=$USER
 
 module purge
-module load anaconda
+source activate base
 conda activate rnaPseudo
 
 
-for FILE in ../02_hisat2/*.bam
+for FILE in ../AcBams/*.bam
 do
-  EXT=${FILE:12:-4}
+  EXT=${FILE::-4}
   echo $EXT
-  #samtools sort -N -@ 8 $FILE -o $EXT.Read.bam
+  samtools sort -n -@ 8 $FILE -o $EXT.Read.bam
 done
