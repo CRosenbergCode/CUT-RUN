@@ -17,6 +17,9 @@ module purge
 source activate base
 conda activate rnaPseudo
 
+#To create file below, run the following command once: 
+#ls *.Read.bam > AgoSorted.txt
+
 filename=AgoSorted.txt # $1
 
 linenum=0
@@ -30,7 +33,7 @@ do
       samtools view -f 0x2 -b ${EXT}.Read.bam > ${EXT}.paired.bam
       bedtools bamtobed -bedpe -i ${EXT}.paired.bam > ${EXT}.bed
       awk '$1==$4 && $6-$2 < 1000 {print $0}' ${EXT}.bed > ${EXT}.clean.bed
-      cut -f 1,2,6 ${EXT}.clean.bed | sort -k1,1 -k2,2n -k3,3n -T TempSort > ${EXT}.fragments.bed
+      cut -f 1,2,6 ${EXT}.clean.bed | sort -k1,1 -k2,2n -k3,3n > ${EXT}.fragments.bed
       bedtools genomecov -bg -i ${EXT}.fragments.bed -g genome.fa.fai > ${EXT}.fragments.bedgraph
       rm ${EXT}.paired.bam
       rm ${EXT}.bed
