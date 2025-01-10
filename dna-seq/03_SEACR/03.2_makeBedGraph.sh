@@ -17,8 +17,10 @@ module purge
 source activate base
 conda activate rnaPseudo
 
-#To create file below, run the following command once: 
+#To create file below, run the following command once:
 #ls *.Read.bam > AgoSorted.txt
+#AgoSorted does not need to exist before running the above command in the command line, but the above command must be run once BEFORE THIS SCRIPT IS RAN
+#The AgoSorted.txt file should be a plain text file with the name of a single .Read.bam file in the working directory in each line.
 
 filename=AgoSorted.txt # $1
 
