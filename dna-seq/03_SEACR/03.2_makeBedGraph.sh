@@ -17,6 +17,8 @@ module purge
 source activate base
 conda activate rnaPseudo
 
+#Before running, ensure that you have the reference genome copied to this directory, as well as the genome.fai, which you can make with samtools faidx VectorBase-68_AaegyptiLVP_AGWG_Genome.fasta
+
 #To create file below, run the following command once:
 #ls *.Read.bam > AgoSorted.txt
 #AgoSorted does not need to exist before running the above command in the command line, but the above command must be run once BEFORE THIS SCRIPT IS RAN
