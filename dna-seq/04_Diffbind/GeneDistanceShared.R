@@ -1,25 +1,66 @@
 library(readr)
-setwd("C:\\Users\\hunte\\Desktop\\ChipData")
+library("tools")
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 options(readr.show_col_types = FALSE)
 
-getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName="ChIP",distance=1000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE){
+getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="ChIP",distance=1000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE,bedFormat=FALSE){
   
-  rnaDF=as.data.frame(readr::read_tsv(bedFile,col_names=FALSE),stringsAsFactors=FALSE,show_co)
-  rnaNames=as.list(rnaDF[10][,])
-  length(rnaNames)
+  orientCol=-1
+  startCol=-1
+  endCol=-1
+  nameCol=-1
+  chromCol=-1
+  
+  
+  if(bedFormat){
+    orientCol=6
+    startCol=2
+    endCol=3
+    chromCol=1
+    nameCol=10
+  }
+  else{
+    #GTF/GFF
+    orientCol=7
+    startCol=4
+    endCol=5
+    chromCol=1
+    nameCol=9
+  }
+  
+  rnaDF=as.data.frame(readr::read_tsv(gtfFile,col_names=FALSE),stringsAsFactors=FALSE,show_co)
+  rnaNames=as.list(rnaDF[nameCol][,])
+  
+  diffExt=file_ext(diffPeakFile)
 
-  sigResDF=read.csv("AcvsOthersDiffPeaks.csv")#diffPeakFile)
+  sigResDF=""
+  
 
-  rnaStart=as.list(rnaDF[2][,])
-  rnaEnd=as.list(rnaDF[3][,])
-  rnaChrom=as.list(rnaDF[1][,])
+  if(diffExt == "csv"){
+    sigResDF=read.csv(diffPeakFile)
+    dnaStart=sigResDF$start
+    dnaEnd=sigResDF$end
+    dnaChrom=sigResDF$chr
+    dnaFold=-sigResDF$Fold
+  }
+  else{
+    sigResDF=as.data.frame(readr::read_tsv(diffPeakFile,col_names=FALSE),stringsAsFactors=FALSE)
+    dnaStart=sigResDF[[2]]
+    dnaEnd=sigResDF[[3]]
+    dnaChrom=as.character(sigResDF[[1]])
+    dnaFold=sigResDF[[8]]
+    #dnaStart=sigResDF$start
+    #dnaEnd=sigResDF$end
+    #dnaChrom=sigResDF$chr
+  }
   
-  dnaStart=as.list(sigResDF[2][,])
-  dnaEnd=as.list(sigResDF[3][,])
-  #print(dnaStart)
-  #print(dnaEnd)
+  rnaStart=rnaDF[[startCol]]
+  rnaEnd=rnaDF[[endCol]]
+  rnaChrom=rnaDF[[chromCol]]
   
-  dnaChrom=as.character(sigResDF[1][,])
+  #dnaStart=sigResDF$start
+  #dnaEnd=sigResDF$end
+  #dnaChrom=sigResDF$chr
   
   withinDist=rep(FALSE,length(rnaChrom)*length(dnaStart))
   dnaDist=rep(0,length(rnaChrom)*length(dnaStart))
@@ -29,10 +70,15 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
   rnaSamp=rep(0,length(rnaChrom)*length(dnaStart))
   over5prime=rep(FALSE,length(rnaChrom)*length(dnaStart))
   
+  #New Additions
+  over3prime=rep(FALSE,length(rnaChrom)*length(dnaStart))
+  dna3Prime=rep(0,length(rnaChrom)*length(dnaStart))
+  #geneWidth=rep(0,length(rnaChrom)*length(dnaStart))
+  #over5prime=rep(FALSE,length(rnaChrom)*length(dnaStart))
   rnaLen=length(rnaChrom)
   dnaLen=length(dnaStart)
   for(i in 1:rnaLen){
-    orientation=rnaDF[i,6]
+    orientation=rnaDF[i,orientCol]
     for(j in 1:dnaLen){
       tempNum=i*dnaLen+j
       if(dnaChrom[j]==rnaChrom[i]){
@@ -74,17 +120,31 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
           setCondition=TRUE
 
         }
+        #All four possible scenarios for overlapping with gene body
         if(inGene && ((as.integer(rnaEnd[i]) < as.integer(dnaEnd[j])) && (as.integer(rnaStart[i]) > as.integer(dnaStart[j])) || (as.integer(rnaStart[i]) < as.integer(dnaStart[j])) && (as.integer(rnaEnd[i]) > as.integer(dnaEnd[j])) || (as.integer(rnaEnd[i]) > as.integer(dnaStart[j])) && (as.integer(rnaEnd[i]) < as.integer(dnaEnd[j])) || (as.integer(rnaStart[i]) > as.integer(dnaStart[j])) && (as.integer(rnaStart[i]) < as.integer(dnaEnd[j])))){
           if(verbose){
             print("Inside the gene!")
           }
-          
+          #Condition for when the peak overlap 5' end of gene on '-' strand
           if((as.integer(rnaEnd[i]) > as.integer(dnaStart[j])) && (as.integer(rnaEnd[i]) < as.integer(dnaEnd[j])) && orientation=='-'){
             over5prime[tempNum]=TRUE
           }
+          #Condition for when the peak overlap the 5' end of the gene on the '+' strand
           if((as.integer(rnaStart[i]) > as.integer(dnaStart[j])) && (as.integer(rnaStart[i]) < as.integer(dnaEnd[j])) && orientation=='+'){
             over5prime[tempNum]=TRUE
           }
+          
+          #Condition for when the peak overlap the 3' end of the gene on the '-' strand
+          if((as.integer(rnaStart[i]) > as.integer(dnaStart[j])) && (as.integer(rnaStart[i]) < as.integer(dnaEnd[j])) && orientation=='-'){
+            over3prime[tempNum]=TRUE
+          }
+          
+          
+          #Condition for when the peak overlap the 3' end of the gene on the '+' strand
+          if((as.integer(rnaEnd[i]) > as.integer(dnaStart[j])) && (as.integer(rnaEnd[i]) < as.integer(dnaEnd[j])) && orientation=='+'){
+            over3prime[tempNum]=TRUE
+          }
+          
           insideGene[tempNum]=TRUE
           setCondition=TRUE
           #withinDist[i]=TRUE
@@ -96,14 +156,17 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
           withinDist[tempNum]=TRUE
           if(orientation=='+'){
             dna5Prime[tempNum]=min(c(abs(as.integer(rnaStart[i])-as.integer(dnaEnd[j])),abs(as.integer(rnaStart[i])-as.integer(dnaStart[j]))))
+            #New
+            dna3Prime[tempNum]=min(c(abs(as.integer(rnaEnd[i])-as.integer(dnaEnd[j])),abs(as.integer(rnaEnd[i])-as.integer(dnaStart[j]))))
           }
           if(orientation=='-'){
             dna5Prime[tempNum]=min(c(abs(as.integer(rnaEnd[i])-as.integer(dnaEnd[j])),abs(as.integer(rnaEnd[i])-as.integer(dnaStart[j]))))
+            #New
+            dna3Prime[tempNum]=min(c(abs(as.integer(rnaStart[i])-as.integer(dnaEnd[j])),abs(as.integer(rnaStart[i])-as.integer(dnaStart[j]))))
           }
           dnaSamp[tempNum]=j
           dnaDist[tempNum]=dist
           rnaSamp[tempNum]=i
-
         }
       }
     }
@@ -117,11 +180,11 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
   for(i in seq(1:length(rnaSamp))){
     k=rnaSamp[i]
     #print(i)
-    geneChrom[i]=rnaDF[k,1]
-    geneOrient[i]=rnaDF[k,6]
-    geneStart[i]=rnaDF[k,2]
-    geneEnd[i]=rnaDF[k,3]
-    rnaTitle[i]=rnaDF[k,10]
+    geneChrom[i]=rnaDF[k,chromCol]
+    geneOrient[i]=rnaDF[k,orientCol]
+    geneStart[i]=rnaDF[k,startCol]
+    geneEnd[i]=rnaDF[k,endCol]
+    rnaTitle[i]=rnaDF[k,nameCol]
   }
 
   #print("Here 2")
@@ -132,15 +195,24 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
   dna5Prime=dna5Prime[withinDist]
   dnaSamp=dnaSamp[withinDist]
   #print(length(dnaSamp))
-  dnaDist=dnaDist[withinDist]
+  #dnaDist=dnaDist[withinDist]
+  over3prime=over3prime[withinDist]
+  dna3Prime=dna3Prime[withinDist]
   insideGene=insideGene[withinDist]
   over5prime=over5prime[withinDist]
-  reducedDF["5 Prime Dist"]=dna5Prime
   reducedDF["Peak Number"]=dnaSamp
-  reducedDF["Gene Dist"]=dnaDist
+  reducedDF["5 Prime Dist"]=dna5Prime
+  reducedDF["3 Prim Dist"]=dna3Prime
   reducedDF["Peak Inside Gene"]=insideGene
-  #print("Here 4")
-  #print(length(dnaSamp))
+
+  
+  foldchange = rep(0,length(dnaSamp))
+  for(i in seq(length(dnaSamp))){
+    foldchange[i]=dnaFold[dnaSamp[i]]
+  }
+  
+  reducedDF["Fold Change"]=foldchange
+  
   peakStart=rep(0,length(dnaSamp))
   peakEnd=rep(0,length(dnaSamp))
   for(i in seq(1,length(dnaSamp))){
@@ -150,32 +222,55 @@ getGeneDistances=function(bedFile,diffPeakFile,topN=FALSE,verbose=FALSE,sampName
   reducedDF["Peak Start"]=peakStart
   reducedDF["Peak End"]=peakEnd
   reducedDF["Over5Prime"]=over5prime
+  reducedDF["Over3Prime"]=over3prime
+  
+  reducedDF["Peak Width"]=reducedDF["Peak End"]-reducedDF["Peak Start"]
+  reducedDF["Gene Width"]=reducedDF["Gene End"]-reducedDF["Gene Start"]
+  
   #print(reducedDF)
   #print("Here 3")
-  reducedDF=reducedDF[reducedDF["Peak Number"]<=topN,]
+  if(topN != -1){
+    reducedDF=reducedDF[reducedDF["Peak Number"]<=topN,] 
+  }
   if(saveResults){
     saveRDS(reducedDF,paste(sampName,"_DistanceDF.RDS"))
+    write.table(reducedDF,paste(sampName,"_DistanceDF.csv"))
   }
   return(reducedDF)
 }
 
-#grep("AAEL[0-9]+",sample)
+
+ExampleObj = getGeneDistances("AedesGenes.bed","Me_RVFV_minus_BF.broadPeak",topN=10000,verbose=FALSE)
+
+ExampleObj = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",verbose=FALSE)
+
+ExampleObj = getGeneDistances("Aedes68Genes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",verbose=FALSE,distance = 10000,bedFormat = TRUE)
+
+setwd("C:\\Users\\hunte\\Desktop\\ChipData")
+setwd("C:\\Users\\hunte\\Desktop\\AltChip")
+
+#write.csv(ExampleObj,"PilotPromoterPlusBodyMACS2_Ac_GeneDistances.csv")
+
+ExampleObj = getGeneDistances("Aedes68GenesExtra.gtf","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",verbose=FALSE,distance = 10000)
 
 
-#test = getGeneDistances("AedesGenes.bed","macs2EDGER_Ac.csv",topN=200,verbose=FALSE)
-#getGeneDistances("sig48RNA.bed","seacrEDGER_Ac.csv",verbose=TRUE,distance=10000)
-#test = getGeneDistances("AedesGenes.bed","macs2EDGER_Ac.csv",topN=400,verbose=FALSE)
-#seacrTest = getGeneDistances("AedesGenes.bed","seacrEDGER_Ac.csv",topN=700,verbose=FALSE,inGene = FALSE,distance=1e4)
+#'gtfFile' is a 9 column GTF file denoting the genes of interest. It can be the entire Aedes genome,
+#or a subset of GOIs (such as those differentially expressed in RNA-seq).
 
-SpencerFrame2 = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",topN=100,verbose=FALSE)
+#'diffPeakFile' is a file containing information about peaks, including chromosome
+#location on chromosome, p-value, log2fold change, etc. 
+#This is typically generated from Diffbind
+#Peak files in bed format are now also supported!
 
-test = SpencerFrame2[,5]
+#'samples1' and 'samples2' are indices which indicate the samples to compare. 
+#The numbers are equivalent to rows in the csv or dataframe, excluding headers
+#As a reminder, R is 1 indexed so the first object will be 1
 
-for(i in test){
-  #print("Test")
-  #print(i)
-  print(grep("AAEL[0-9]+",i,value=TRUE))
-}
+#'plotting' simply determines whether or not plots will be displayed
+#It is turned off by default
 
-#library(stringr)
-#str_match(alice, ".*\\.D([0-9]+)\\.LIS.*")[, 2]
+#'saving' allows the user to save intermediate files such as 
+#Take care as if the name is the same as a previous file THE OLD FILE WILL BE OVERWRITTEN
+#If the file summary file is to be saved, users should do this themselves.
+
+#
