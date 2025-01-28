@@ -3,6 +3,41 @@ library("tools")
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 options(readr.show_col_types = FALSE)
 
+
+#'gtfFile' is a 9 column GTF file denoting the genes of interest. It can be the entire Aedes genome,
+#a subset of GOIs (such as those differentially expressed in RNA-seq), or specific regions (such as 3' UTRs).
+#a selection of these files are provided on the CUT&RUN github in dnaseq->04_Diffbind->
+
+#If using the previous 10 column bed-style files, call the function with bedFormat=TRUE (see below)
+
+#'diffPeakFile' is a file containing information about peaks, including chromosome
+#location on chromosome, p-value, log2fold change, etc. 
+#This is typically generated from Diffbind
+#Peak files in bed format are now also supported!
+
+
+#'inGene' and 'nearEnd' are both parameters that change the set of genes returned
+#If 'inGene' is True, rows returned will include peaks inside of a gene body even if they are not within the given
+#distance of the end of the gene
+#If 'nearEnd' is True, rows returned will include peaks within the given distance of the end of the gene even if 
+#they do not overlap with the gene body
+
+#bedFormat is an optional argument that should be set to "TRUE" if using a bed-style file
+#with genomic coordinates in the second and third columns
+#It is false by default and the function expects GTF/GFF style files if set to "FALSE"
+
+#topN is an optional parameter to only accept the top N peaks and disregard matches for any peak lower in the file
+#By default, this behavior is disabled and it is recommend 
+
+#'saveResults' allows the user to save the results as both a CSV and RDS
+
+#sampName is an optional parameter that will prefix the names of any files saved
+#Take care as if the name is the same as a previous file THE OLD FILE WILL BE OVERWRITTEN
+
+#'verbose' is an optional parameter that will cause the function to print significantly more text while running
+#It is not recommended to be used unless debugging the code
+
+
 getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="ChIP",distance=1000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE,bedFormat=FALSE){
   
   orientCol=-1
@@ -227,50 +262,18 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   reducedDF["Peak Width"]=reducedDF["Peak End"]-reducedDF["Peak Start"]
   reducedDF["Gene Width"]=reducedDF["Gene End"]-reducedDF["Gene Start"]
   
-  #print(reducedDF)
-  #print("Here 3")
   if(topN != -1){
     reducedDF=reducedDF[reducedDF["Peak Number"]<=topN,] 
   }
   if(saveResults){
     saveRDS(reducedDF,paste(sampName,"_DistanceDF.RDS"))
-    write.table(reducedDF,paste(sampName,"_DistanceDF.csv"))
+    write.csv(reducedDF,paste(sampName,"_DistanceDF.csv"))
   }
   return(reducedDF)
 }
 
+#Look for matches between the first 10 peaks in a file and genes within 10000 bp of those peaks
+ExampleObj = getGeneDistances("AedesGenes.bed","Me_RVFV_minus_BF.broadPeak",topN=10,distance = 10000)
 
-ExampleObj = getGeneDistances("AedesGenes.bed","Me_RVFV_minus_BF.broadPeak",topN=10000,verbose=FALSE)
-
-ExampleObj = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",verbose=FALSE)
-
-ExampleObj = getGeneDistances("Aedes68Genes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",verbose=FALSE,distance = 10000,bedFormat = TRUE)
-
-setwd("C:\\Users\\hunte\\Desktop\\ChipData")
-setwd("C:\\Users\\hunte\\Desktop\\AltChip")
-
-#write.csv(ExampleObj,"PilotPromoterPlusBodyMACS2_Ac_GeneDistances.csv")
-
-ExampleObj = getGeneDistances("Aedes68GenesExtra.gtf","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",verbose=FALSE,distance = 10000)
-
-
-#'gtfFile' is a 9 column GTF file denoting the genes of interest. It can be the entire Aedes genome,
-#or a subset of GOIs (such as those differentially expressed in RNA-seq).
-
-#'diffPeakFile' is a file containing information about peaks, including chromosome
-#location on chromosome, p-value, log2fold change, etc. 
-#This is typically generated from Diffbind
-#Peak files in bed format are now also supported!
-
-#'samples1' and 'samples2' are indices which indicate the samples to compare. 
-#The numbers are equivalent to rows in the csv or dataframe, excluding headers
-#As a reminder, R is 1 indexed so the first object will be 1
-
-#'plotting' simply determines whether or not plots will be displayed
-#It is turned off by default
-
-#'saving' allows the user to save intermediate files such as 
-#Take care as if the name is the same as a previous file THE OLD FILE WILL BE OVERWRITTEN
-#If the file summary file is to be saved, users should do this themselves.
-
-#
+#Look for matches between all peaks in a set of diffbind output, using an old bed file
+ExampleObj = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",bedFormat = TRUE)

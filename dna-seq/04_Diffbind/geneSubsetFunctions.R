@@ -114,6 +114,14 @@ subsetGeneNameHelper(wholeGTF,c("AAEL009762","AAEL009762","AAEL009762"))
 #Ex: AedesGenes.gtf
 #Second argument is the length
 
+#bedFormat is an optional argument that should be set to "TRUE" if using a bed-style file
+#with genomic coordinates in the second and third columns
+#It is false by default and the function expects GTF/GFF style files if set to "FALSE"
+
+#geneBody is an optional argument regarding whether to include the gene body as well as the promoter
+#By default, it is true and the genomic ranges will have the promoter region added and gene body retained
+#If set to "FALSE", only the promoter regions will be returned
+
 #Does not return the new dataframe, but rather writes it to a new file with the same name
 #Other than "Prom####" before the suffix, where #### is the chosen length of promoter region
 
