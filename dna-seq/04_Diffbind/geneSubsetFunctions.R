@@ -114,35 +114,77 @@ subsetGeneNameHelper(wholeGTF,c("AAEL009762","AAEL009762","AAEL009762"))
 #Ex: AedesGenes.gtf
 #Second argument is the length
 
+#bedFormat is an optional argument that should be set to "TRUE" if using a bed-style file
+#with genomic coordinates in the second and third columns
+#It is false by default and the function expects GTF/GFF style files if set to "FALSE"
+
+#geneBody is an optional argument regarding whether to include the gene body as well as the promoter
+#By default, it is true and the genomic ranges will have the promoter region added and gene body retained
+#If set to "FALSE", only the promoter regions will be returned
+
 #Does not return the new dataframe, but rather writes it to a new file with the same name
 #Other than "Prom####" before the suffix, where #### is the chosen length of promoter region
 
-makePromFiles = function(bedFile, promLengths,save=TRUE){
+makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody=TRUE){
+  
+  orientCol=-1
+  startCol=-1
+  endCol=-1
+  #nameCol=-1
+  #chromCol=-1
+  
+  
+  if(bedFormat){
+    orientCol=6
+    startCol=2
+    endCol=3
+    #chromCol=1
+    #nameCol=10
+  }
+  else{
+    #GTF/GFF
+    orientCol=7
+    startCol=4
+    endCol=5
+    #chromCol=1
+    #nameCol=9
+  }
+  
+  
   wholeBed=read_tsv(bedFile,col_names = FALSE)
   fileroot=substr(bedFile,1,nchar(bedFile)-4)
-  geneStart = wholeBed[[2]]
-  geneEnd = wholeBed[[3]]
+  geneStart = wholeBed[[startCol]]
+  geneEnd = wholeBed[[endCol]]
   count = 1
   for(promLen in promLengths){
     newBed = wholeBed
     for(i in seq(length(geneStart)))
-      if(newBed[i,6] == "+"){
-        newBed[i,3] = geneStart[i]
+      if(newBed[i,orientCol] == "+"){
+        if(genebody==FALSE){
+          newBed[i,startCol] = geneStart[i] 
+        }
         if(geneStart[i] < promLen){
-          newBed[i,2] = 0
+          newBed[i,startCol] = 0
         }
         else{
-          newBed[i,2] = geneStart[i] - promLen
+          newBed[i,startCol] = geneStart[i] - promLen
         }
-        newBed[i,4]
+        #newBed[i,4]
       }
-    else{
-      #
-      newBed[i,2] = geneEnd[i]
-      newBed[i,3] = geneEnd[i]+promLen
+      else{
+        #
+        if(genebody==FALSE){
+          newBed[i,startCol] = geneEnd[i]
+        }
+        #newBed[i,startCol] = geneEnd[i]
+        newBed[i,endCol] = geneEnd[i]+promLen
+      }
+    if(genebody){
+      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"GeneANDProm",toString(promLen),substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="")
     }
-    outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"Prom",toString(promLen),substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="")
-    
+    else{
+      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"Prom",toString(promLen),substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="") 
+    }
     write.table(newBed,file=outFile,quote=FALSE, sep='\t', col.names = FALSE,row.names=FALSE)
     count = count+1
   }
@@ -157,4 +199,8 @@ makePromFiles("AedesGenes.gtf",c(500))
 #Create multiple files at once
 makePromFiles("AedesGenes.gtf",c(750,1500,2000))
 
+#Create file with only promoter instead of promoter and gene body
+makePromFiles("AedesGenes.gtf",c(500),genebody=FALSE)
 
+#Create file with bed file instead of a gtf
+makePromFiles("AedesGenes.bed",c(500),bedFormat = TRUE)
