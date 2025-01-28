@@ -92,6 +92,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   rnaStart=rnaDF[[startCol]]
   rnaEnd=rnaDF[[endCol]]
   rnaChrom=rnaDF[[chromCol]]
+
   
   #dnaStart=sigResDF$start
   #dnaEnd=sigResDF$end
