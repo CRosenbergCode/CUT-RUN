@@ -38,7 +38,7 @@ options(readr.show_col_types = FALSE)
 #It is not recommended to be used unless debugging the code
 
 
-getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="ChIP",distance=1000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE,bedFormat=FALSE){
+getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="ChIP",distance=10000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE,bedFormat=FALSE){
   
   orientCol=-1
   startCol=-1
@@ -83,7 +83,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     dnaStart=sigResDF[[2]]
     dnaEnd=sigResDF[[3]]
     dnaChrom=as.character(sigResDF[[1]])
-    dnaFold=sigResDF[[8]]
+    dnaFold=-sigResDF[[8]]
     #dnaStart=sigResDF$start
     #dnaEnd=sigResDF$end
     #dnaChrom=sigResDF$chr
@@ -92,7 +92,6 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   rnaStart=rnaDF[[startCol]]
   rnaEnd=rnaDF[[endCol]]
   rnaChrom=rnaDF[[chromCol]]
-
   
   #dnaStart=sigResDF$start
   #dnaEnd=sigResDF$end
@@ -222,10 +221,10 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     geneEnd[i]=rnaDF[k,endCol]
     rnaTitle[i]=rnaDF[k,nameCol]
   }
-
+  #print(rnaTitle)
   #print("Here 2")
-  reducedDF=data.frame(geneChrom,geneStart,geneEnd,geneOrient,rnaTitle)
-  colnames(reducedDF) = c("Chromosome","Gene Start", "Gene End","Gene Orientation","Gene Name")
+  reducedDF=data.frame(geneChrom,geneStart,geneEnd,geneOrient)#,rnaTitle)
+  colnames(reducedDF) = c("Chromosome","Gene Start", "Gene End","Gene Orientation")#,"Gene Name")
   #print(length(withinDist))
   #print(length(rnaSamp))
   dna5Prime=dna5Prime[withinDist]
@@ -240,7 +239,55 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   reducedDF["5 Prime Dist"]=dna5Prime
   reducedDF["3 Prim Dist"]=dna3Prime
   reducedDF["Peak Inside Gene"]=insideGene
+  
+  geneID=rep(0,length(reducedDF$'Peak Start'))
+  geneName=rep(0,length(reducedDF$'Peak Start'))
+  geneDes=rep(0,length(reducedDF$'Peak Start'))
+  geneBiotype=rep(0,length(reducedDF$'Peak Start'))
+  
+  for(i in seq(length(rnaTitle))){
+    temp=strsplit(rnaTitle[i],split=';')[[1]]
+    #Some do not have a name category, need to handle that
+    if(length(temp)==3){
+      temp[1]=substring(temp[1],first=4)
+      geneID[i]=temp[1]
+      #temp[2]=substring(temp[2],first=6)
+      geneName[i]="NA"
+      temp[2]=substring(temp[2],first=13)
+      geneDes[i]=temp[2]
+      temp[3]=substring(temp[3],first=13)
+      geneBiotype[i]=temp[3]
+    }
+    else{
+      temp[1]=substring(temp[1],first=4)
+      geneID[i]=temp[1]
+      temp[3]=substring(temp[3],first=13)
+      geneDes[i]=temp[3]
+      
+      
+      if(temp[4]=="gene_ebi_biotype=lncRNA"){
+        temp[2]=substring(temp[2],first=8)
+        geneName[i]=temp[2]
+        temp[4]=substring(temp[4],first=18)
+        geneBiotype[i]=temp[4]
+      }
+      else{
+        temp[2]=substring(temp[2],first=6)
+        geneName[i]=temp[2]
+        temp[4]=substring(temp[4],first=13)
+        geneBiotype[i]=temp[4]
+      }
+    }
+    #print(temp)
+  } 
+  
+  reducedDF["Gene ID"]=geneID
+  reducedDF["Gene Name"]=geneName
+  reducedDF["Gene Description"]=geneDes
+  reducedDF["EBI Biotype"]=geneBiotype
+  
 
+  
   
   foldchange = rep(0,length(dnaSamp))
   for(i in seq(length(dnaSamp))){
@@ -263,6 +310,23 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   reducedDF["Peak Width"]=reducedDF["Peak End"]-reducedDF["Peak Start"]
   reducedDF["Gene Width"]=reducedDF["Gene End"]-reducedDF["Gene Start"]
   
+  peakStartOffset=rep(0,length(reducedDF$'Peak Start'))
+  peakEndOffset=rep(0,length(reducedDF$'Peak Start'))
+
+  for(i in seq(length(reducedDF$'Peak Start'))){
+    if(reducedDF$'Gene Orientation'[i]=="+"){
+      peakStartOffset[i]=reducedDF$'Peak Start'[i]-reducedDF$'Gene Start'[i]
+      peakEndOffset[i]=reducedDF$'Peak End'[i]-reducedDF$'Gene Start'[i]
+    }
+    if(reducedDF$'Gene Orientation'[i]=="-"){
+      peakStartOffset[i]=reducedDF$'Gene Start'[i]-reducedDF$'Peak Start'[i]
+      peakEndOffset[i]=reducedDF$'Gene Start'[i]-reducedDF$'Peak End'[i]
+    }
+  }
+
+  reducedDF["Peak Start Offset"]=peakStartOffset
+  reducedDF["Peak End Offset"]=peakEndOffset
+    
   if(topN != -1){
     reducedDF=reducedDF[reducedDF["Peak Number"]<=topN,] 
   }
@@ -274,7 +338,10 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
 }
 
 #Look for matches between the first 10 peaks in a file and genes within 10000 bp of those peaks
-ExampleObj = getGeneDistances("AedesGenes.bed","Me_RVFV_minus_BF.broadPeak",topN=10,distance = 10000)
+ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",topN=10,distance = 10000)
 
 #Look for matches between all peaks in a set of diffbind output, using an old bed file
-ExampleObj = getGeneDistances("AedesGenes.bed","AcvsOthersDiffPeaks.csv",bedFormat = TRUE)
+ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,distance = 10000)
+
+ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,inGene=FALSE)
+
