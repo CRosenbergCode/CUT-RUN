@@ -2,16 +2,16 @@ library(DESeq2) #Used as DESeq2 objects may be read in, although no library comm
 library(readr) #For read_tsv()
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-wholeGTF=read_tsv("AedesGenes.gtf",col_names = FALSE)
+#wholeGTF=read_tsv("AedesGenes.gtf",col_names = FALSE)
 
 #Primarily a helper function which returns a list of the AAEL##### names from the gtf/gff file
 #This is built for the Aedes aegypti vectorbase 10 column gff/gtf file specifically and may not work
 #If applied to other organisms/formats as it relies upon a specific string format
-getGeneName = function(gtfFrame){
+getGeneName = function(gtfFrame,bedformat=FALSE){
   nsize=nrow(gtfFrame)
   retArr=rep("",nsize)
   for(i in seq(nsize)){
-    retArr[i]=substring(toString(gtfFrame[i,10]),4,13)
+    retArr[i]=substring(toString(gtfFrame[i,10]),4,13)#,10,19)#,4,13)
   }
   return(retArr)
 }
@@ -101,12 +101,19 @@ myGTF=subsetGenesDeseq(wholeGTF,exDEseqOb,pval=0.1)
 #Return gtf with only 3 genes manually chosen
 subsetGeneNameHelper(wholeGTF,c("AAEL009762","AAEL009762","AAEL009762"))
 
+test=read.table("RVFVvBF7dresults_p10_min10-pilot.ex")
 
+wholeGTF=read_tsv("Aedes68GenesExtra.gtf",col_names = FALSE)
+wholeGTF=read_tsv("AedesGenes.bed",col_names = FALSE)
+wholeGTF=read_tsv("Aedes68.promoters.bed",col_names = FALSE)
 
+subsetGeneList(wholeGTF,"RVFVvBF7dresults_p10_min10-pilot.ex",savename="ExampleSubset2.bed")
 
+subsetGeneNameHelper(wholeGTF,c("AAEL009762","AAEL009762","AAEL009762"),savename = "Test2.bed")
 
+getGeneName(wholeGTF)
 
-
+substring(wholeGTF[1,10],10,19)
 
 #A function that reads a 10 column gff/gtf file and returns a modified version changed to instead provide regions
 #a given number of basepairs upstream of the start site
@@ -125,7 +132,7 @@ subsetGeneNameHelper(wholeGTF,c("AAEL009762","AAEL009762","AAEL009762"))
 #Does not return the new dataframe, but rather writes it to a new file with the same name
 #Other than "Prom####" before the suffix, where #### is the chosen length of promoter region
 
-makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody=TRUE){
+makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody=TRUE,bidirectional=FALSE){
   
   orientCol=-1
   startCol=-1
@@ -158,10 +165,10 @@ makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody
   count = 1
   for(promLen in promLengths){
     newBed = wholeBed
-    for(i in seq(length(geneStart)))
+    for(i in seq(length(geneStart))){
       if(newBed[i,orientCol] == "+"){
         if(genebody==FALSE){
-          newBed[i,startCol] = geneStart[i] 
+          newBed[i,endCol] = geneStart[i] 
         }
         if(geneStart[i] < promLen){
           newBed[i,startCol] = 0
@@ -170,6 +177,9 @@ makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody
           newBed[i,startCol] = geneStart[i] - promLen
         }
         #newBed[i,4]
+        if(bidirectional){
+          newBed[i,endCol]=newBed[i,endCol]+promLen
+        }
       }
       else{
         #
@@ -178,12 +188,26 @@ makePromFiles = function(bedFile, promLengths,save=TRUE,bedFormat=FALSE,genebody
         }
         #newBed[i,startCol] = geneEnd[i]
         newBed[i,endCol] = geneEnd[i]+promLen
+        
+        if(bidirectional){
+          if(newBed[i,startCol]<promLen){
+            newBed[i,startCol]=0
+          }
+          else{
+            newBed[i,startCol]=newBed[i,startCol]-promLen
+          }
+        }
       }
+    }
+    biString=""
+    if(bidirectional){
+      biString="Bi"
+    }
     if(genebody){
-      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"GeneANDProm",toString(promLen),substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="")
+      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"GeneANDProm",toString(promLen),biString,substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="")
     }
     else{
-      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"Prom",toString(promLen),substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="") 
+      outFile = paste(substr(bedFile,1,nchar(bedFile)-4),"Prom",toString(promLen),biString,substr(bedFile,nchar(bedFile)-3,nchar(bedFile)),sep="") 
     }
     write.table(newBed,file=outFile,quote=FALSE, sep='\t', col.names = FALSE,row.names=FALSE)
     count = count+1
@@ -204,3 +228,6 @@ makePromFiles("AedesGenes.gtf",c(500),genebody=FALSE)
 
 #Create file with bed file instead of a gtf
 makePromFiles("AedesGenes.bed",c(500),bedFormat = TRUE)
+
+#Create file that hasa distances on both sides of the TSS but excludes the rest of the gene body
+makePromFiles("Aedes68Genes.bed",c(500,2000,5000,10000),bedFormat = TRUE,bidirectional=TRUE,genebody = FALSE)
