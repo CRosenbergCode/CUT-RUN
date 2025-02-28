@@ -76,7 +76,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     dnaStart=sigResDF$start
     dnaEnd=sigResDF$end
     dnaChrom=sigResDF$chr
-    dnaFold=-sigResDF$Fold
+    dnaFold=sigResDF$Fold
   }
   else{
     sigResDF=as.data.frame(readr::read_tsv(diffPeakFile,col_names=FALSE),stringsAsFactors=FALSE)
@@ -207,6 +207,10 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     }
   }
   rnaSamp=rnaSamp[withinDist]
+  if(length(rnaSamp)==0){
+    print("No matching regions found for the given parameters")
+    return()
+  }
   geneChrom=rep(0,length(rnaSamp))
   geneOrient=rep(0,length(rnaSamp))
   geneStart=rep(0,length(rnaSamp))
@@ -221,7 +225,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     geneEnd[i]=rnaDF[k,endCol]
     rnaTitle[i]=rnaDF[k,nameCol]
   }
-  #print(rnaTitle)
+  #print(rnaSamp)
   #print("Here 2")
   reducedDF=data.frame(geneChrom,geneStart,geneEnd,geneOrient)#,rnaTitle)
   colnames(reducedDF) = c("Chromosome","Gene Start", "Gene End","Gene Orientation")#,"Gene Name")
@@ -229,8 +233,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   #print(length(rnaSamp))
   dna5Prime=dna5Prime[withinDist]
   dnaSamp=dnaSamp[withinDist]
-  #print(length(dnaSamp))
-  #dnaDist=dnaDist[withinDist]
+  
   over3prime=over3prime[withinDist]
   dna3Prime=dna3Prime[withinDist]
   insideGene=insideGene[withinDist]
@@ -246,6 +249,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   geneBiotype=rep(0,length(reducedDF$'Peak Start'))
   
   for(i in seq(length(rnaTitle))){
+    #print(rnaTitle[i])
     temp=strsplit(rnaTitle[i],split=';')[[1]]
     #Some do not have a name category, need to handle that
     if(length(temp)==3){
@@ -337,11 +341,18 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   return(reducedDF)
 }
 
+
+ex=getGeneDistances("Aedes68Genes.bed","PilotSEACR_Results_sig.csv",distance = 5000,inGene=FALSE,bedFormat = TRUE)
+
+#Extracting regions only close to 5 prime end
+nrow(ex[ex$`5 Prime Dist`<5000,])
+
+ex=ex[ex$`5 Prime Dist`<5000,]
+
+write.csv(ex,"PilotMergedPeaksWithin5KPromoter.csv")
+
 #Look for matches between the first 10 peaks in a file and genes within 10000 bp of those peaks
 ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",topN=10,distance = 10000)
 
 #Look for matches between all peaks in a set of diffbind output, using an old bed file
-ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,distance = 10000)
-
-ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,inGene=FALSE)
-
+ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,distance = 10000,inGene=FALSE)
