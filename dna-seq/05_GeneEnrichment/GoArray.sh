@@ -4,7 +4,7 @@
 #SBATCH --time=128:00:00
 #SBATCH --qos=normal
 #SBATCH --partition=week-long-cpu
-#SBATCH --job-name=HunterGoArray
+#SBATCH --job-name=GoArray
 #SBATCH --mail-user=$USER
 #SBATCH --mail-type=all
 #SBATCH --output=%x.%A-%a.log # gives slurm.ID.log
