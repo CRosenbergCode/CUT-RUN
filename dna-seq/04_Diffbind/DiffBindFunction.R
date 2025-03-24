@@ -93,7 +93,7 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
         par("mar")
         par(mar=c(1,1,1,1))
         #Error handling?
-        dba.plotVenn(analizOnly,contrast=1,method=DBA_ALL_METHODS)
+    
         
         #Good
         dba.plotPCA(analizOnly,  attributes=DBA_FACTOR, label=DBA_ID)
@@ -102,7 +102,6 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
         plot(analizOnly)
         
         #Error handling?
-        dba.plotVolcano(analizOnly)
         
         #Error handling?
         if(edger==TRUE){
@@ -111,6 +110,7 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
         else{
           dba.plotMA(analizOnly, method=DBA_DESEQ2)
         }
+        dba.plotVenn(analizOnly,contrast=1,method=DBA_ALL_METHODS)
       },
       error = function(e){          
         print("Error: Too few significant peaks too properly plot.")
