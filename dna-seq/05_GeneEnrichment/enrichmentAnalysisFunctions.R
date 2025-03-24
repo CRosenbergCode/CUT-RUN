@@ -155,12 +155,15 @@ gmtGSEA = function(rnaFile,gmtFile,returnMultiple=FALSE){
 
 #Return just table of results
 
-myGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_2_28.gmt")
+#RosenbergCustomAnnotations_2025_2_28.gmt
+#RosenbergCustomAnnotations_2025_3_24.gmt
+
+myGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_3_24.gmt")
 head(myGMT)
 
 #Return multiple objects used for plotting
 
-multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_2_28.gmt",returnMultiple=TRUE)
+multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_3_24.gmt",returnMultiple=TRUE)
 #head(myGMT)
 
 plotEnrichment(multiGMT$paths[["IMM"]],
@@ -168,7 +171,7 @@ plotEnrichment(multiGMT$paths[["IMM"]],
 
 
 #Enrichment Score Plot Subsetted by significance
-multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_2_28.gmt",returnMultiple=TRUE)
+multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_3_24.gmt",returnMultiple=TRUE)
 selected_rows=multiGMT$table[multiGMT$table$padj<0.05,]
 selected_rows = selected_rows %>%
   arrange(padj)
@@ -245,7 +248,7 @@ dotplot(testCompareRNA,showCategory = 5)
 #"DAY1_BFvSFdresultsp10_ms-PEannotated.csv"
 #RNAseqPilot.csv
 
-chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5){
+chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,promoterOnly=TRUE){
   plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile=txFile){
     samplefiles <- as.list(peakFileList)
     
@@ -273,6 +276,10 @@ chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",
   
   ex_annot = exampleDistances[[1]]@anno
   
+  if(promoterOnly){
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 2000,]
+  }
+  
   gIDs <- ex_annot$geneId
   
   annotations_edb <- AnnotationDbi::select(orgData,
@@ -297,6 +304,12 @@ chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",
 
 
 testORA=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="BP")
+dotplot(testORA,showCategory = 5)
+
+
+testORA=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="BP",promoterOnly=FALSE)
+dotplot(testORA,showCategory = 5)
+
 
 testMF=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="MF")
 
@@ -326,7 +339,7 @@ goplot(testORA)
 #goCat represents which of the three subontologies (CC,MF,BP) to include in the analysis. All three are included by default
 #orgData is an organism db object, which should be referred to using the same name as its library
 
-compareChipGO=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,plotting=FALSE,sampNames=c()){
+compareChipGO=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,plotting=FALSE,sampNames=c(),promoterOnly=TRUE){
   plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff"){
     samplefiles <- as.list(peakFileList)
     
@@ -353,8 +366,26 @@ compareChipGO=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.g
     sampNames=paste0("Sample_", 1:length(fileList))
   }
   exampleDistances=plotPeakDistances(fileList,txFile=txFile,sampNames = sampNames)
-  pre_genes = lapply(exampleDistances, function(i) as.data.frame(i)$geneId)
+  
+  if(promoterOnly){
+    pre_genes = lapply(exampleDistances, function(i) as.data.frame(i))
+    for(i in seq(length(pre_genes))){
+      head(pre_genes[[i]])
+      pre_genes[[i]]=pre_genes[[i]][abs(pre_genes[[i]]$distanceToTSS) <= 2000,]
+    }
+    pre_genes = lapply(pre_genes, function(i) as.data.frame(i)$geneId)
+  }
+  else{
+    pre_genes = lapply(exampleDistances, function(i) as.data.frame(i)$geneId)
+  }
 
+  # if(promoterOnly){
+  #   for(i in seq(length(pre_genes))){
+  #     head(pre_genes[[i]])
+  #     pre_genes[[i]]=pre_genes[[i]][abs(pre_genes[[i]]$distanceToTSS) <= 2000,]
+  #   }
+  # }
+  
   names(pre_genes)=sampNames
   #genes = list(X1=unique(pre_genes[[1]]),X2=unique(pre_genes[[2]]))#list(X1=exampleDistances[1],X2=exampleDistances[2])
   compGO <- compareCluster(geneCluster = pre_genes,#genes, 
@@ -384,7 +415,6 @@ testcompare2=compareChipGO(samplefiles2,org.Aaegypti.eg.db,goCat="MF")
 
 dotplot(testcompare2,showCategory = 5)
 
-
 testcompare5=compareChipGO(samplefiles5,org.Aaegypti.eg.db,goCat="MF",sampNames = c("BF_Ac_1","BF_Ac_2","RVFV_Ac_1_1","RVFV_1_1","RVFV_Ac_2"))
 
 dotplot(testcompare5,showCategory = 5)
@@ -395,8 +425,6 @@ head(testcompare5)
 metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
 d7_me_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
 d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
-
-samplefiles=d7_me_Pilot$Peaks
 
 
 testcompare8=compareChipGO(samplefiles,org.Aaegypti.eg.db,goCat="MF")#,sampNames = c("BF_Ac_1","BF_Ac_2","RVFV_Ac_1_1","RVFV_1_1","RVFV_Ac_2"))
@@ -409,3 +437,106 @@ dotplot(testcompare8,showCategory = 5)
 #p1 <- heatplot(edox, showCategory=5)
 #p2 <- heatplot(edox, foldChange=geneList, showCategory=5)
 #cowplot::plot_grid(p1, p2, ncol=1, labels=LETTERS[1:2])
+
+
+
+
+
+
+
+
+#Implemented, but not inspiring results
+
+presenceAbsenceORA = function(peakFile1,peakFile2,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,plotting=FALSE,sampNames=c(),promoterOnly=TRUE){
+  
+  plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff"){
+    samplefiles <- as.list(peakFileList)
+    
+    testtx=makeTxDbFromGFF(txFile,format="gff3")
+    
+    
+    peakAnnoList <- lapply(peakFileList, annotatePeak, TxDb=testtx, 
+                           tssRegion=c(-2000, 2000), verbose=FALSE)
+    
+    
+    if(verbose){
+      print(peakAnnoList)
+    }
+    if(length(sampNames)>0){
+      names(peakAnnoList)=sampNames
+    }
+    par("mar")
+    par(mar=c(1,1,1,1))
+    plotAnnoBar(peakAnnoList)
+    plotDistToTSS(peakAnnoList, title="Distribution of Peaks\n relative to TSS")
+    return(peakAnnoList)
+  }
+  if(length(sampNames)==0){
+    sampNames=paste0("Sample_", 1:2)
+  }
+  samp1=as.data.frame(plotPeakDistances(peakFile1,txFile=txFile)[[1]])
+  samp2=as.data.frame(plotPeakDistances(peakFile2,txFile=txFile)[[1]])
+  if(promoterOnly){
+    samp1_peaks=samp1[abs(samp1$distanceToTSS) <= 2000,]$geneId
+    samp2_peaks=samp2[abs(samp2$distanceToTSS) <= 2000,]$geneId
+  }
+  else{
+    samp1_peaks=samp1$geneId
+    samp2_peaks=samp2$geneId
+  }
+  #samp1_peaks=samp1[abs(samp1$distanceToTSS) <= 2000,]$geneId
+  
+  #samp2=as.data.frame(testcompare2$Sample_2)
+  #samp2_peaks=samp2[abs(samp2$distanceToTSS) <= 2000,]$geneId
+  diffPeaks=samp1_peaks[!samp1_peaks %in% samp2_peaks]
+  #return(diffPeaks)
+  
+  ego <- enrichGO(gene = diffPeaks, 
+                  keyType = "GID", 
+                  OrgDb = orgData, 
+                  ont = goCat, 
+                  pAdjustMethod = "BH", 
+                  pvalueCutoff = qval,
+                  #qvalueCutoff = qval, 
+                  readable = TRUE)
+  return(ego)
+}
+
+
+
+
+metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
+d7_me_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
+d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
+d7_me_Pilot_Peaks=d7_me_Pilot$Peaks
+
+testcompare2=compareChipGOFake(samplefiles2,org.Aaegypti.eg.db,goCat="MF")
+
+samp1=as.data.frame(testcompare2$Sample_1)
+
+samp1_peaks=samp1[abs(samp1$distanceToTSS) <= 2000,]$geneId
+
+samp2=as.data.frame(testcompare2$Sample_2)
+samp2_peaks=samp2[abs(samp2$distanceToTSS) <= 2000,]$geneId
+diffPeaks=samp1_peaks[!samp1_peaks %in% samp2_peaks]
+
+metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
+d7_ac_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
+d7_ac_Pilot=d7_ac_Pilot[d7_ac_Pilot$Factor=="H3K27Ac",]
+d7_ac_Pilot_Peaks=d7_ac_Pilot$Peaks
+
+ 
+
+
+testPresenceAbsence=presenceAbsenceORA(d7_ac_Pilot_Peaks[3],d7_ac_Pilot_Peaks[4],orgData=org.Aaegypti.eg.db,goCat="MF")
+
+
+
+testPresenceAbsence=presenceAbsenceORA(d7_me_Pilot_Peaks[3],d7_me_Pilot_Peaks[4],orgData=org.Aaegypti.eg.db,goCat="MF",promoterOnly=FALSE)
+
+testPresenceAbsence=presenceAbsenceORA(d7_me_Pilot_Peaks[3],d7_me_Pilot_Peaks[4],orgData=org.Aaegypti.eg.db,goCat="MF",promoterOnly=FALSE)
+
+
+dotplot(testPresenceAbsence)
+
+head(testPresenceAbsence)
