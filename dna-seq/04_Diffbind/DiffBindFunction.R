@@ -18,15 +18,41 @@ library(tidyverse)
 library(edgeR)
 library(GenomicRanges)
 library(Repitools)
-#samples <- read.csv('chipSamples2_28_24.csv')
+
+
+#namesOne and namesTwo are not necessary to provide, they are labels
+#Using them helps properly keep track of the comparison groups (i.e. RVFV Ac vs. BF Ac)
+
+#'samples1' and 'samples2' are indices which indicate the samples to compare. 
+#The numbers are equivalent to rows in the csv or dataframe, excluding headers
+#As a reminder, R is 1 indexed so the first object will be 1
+
+#'plotting' simply determines whether or not plots will be displayed
+#It is turned off by default
+
+#'saving' allows the user to save intermediate files such as 
+#Take care as if the name is the same as a previous file THE OLD FILE WILL BE OVERWRITTEN
+#If the file summary file is to be saved, users should do this themselves.
+
+#'fromFile' is a boolean which indicates whether the file provided 
+#should be interpreted as a an RDS file holding the counts object
+#This is mainly to save time, as the process can
+#The samples compared in the contrast can change, but expected peak size
+#CANNOT be changed when reading from a file
 
 runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
-                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=FALSE,blacklist=c()){
+                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=FALSE,blacklist=c(),tableIn=FALSE){
   if(fromFile){
     contrastOnly=readRDS(sampleFile)
   }
   else{
-    samplesOnly <- read.csv(sampleFile)
+    if(tableIn){
+      samplesOnly = sampleFile
+    }
+    else{
+      samplesOnly <- read.csv(sampleFile)
+    }
+    #samplesOnly <- read.csv(sampleFile)
     dbOnly <- dba(sampleSheet=samplesOnly) #scoreCol=5
     if(length(blacklist)>0){
       dbOnly=dba.blacklist(dbOnly,blacklist=greylist@regions,greylist=greylist@regions)
@@ -90,37 +116,36 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
         print("Error: Too few significant peaks too properly plot.")
       }
     )
+    
+    #?
   }
   return(resDF)
 }
 
-greylist=readRDS("RVFV_BF_6_SampGreylist_0.95.RDS")
+#Example Usage
 
-runDiffbind(sampleFile="ChipSamplesNoControlAc.csv",samples1 = c(1:3),samples2=c(4:6),blacklist = greylist)
 
-#
-#
-#It is highly recommend to save
+runDiffbind(sampleFile="chipSamplesOnlyPair.csv",samples1 = c(1:3),samples2=c(4:6))
 
-#runDiffbind = function(sampleCSV="",samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
-#namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE){
+test=readRDS("Condition1vsCondition2.RDS")
 
-#namesOne and namesTwo are not necessary to provide, they are labels
-#Using them helps properly keep track of the comparison groups (i.e. RVFV Ac vs. BF Ac)
+newDF=runDiffbind(sampleFile="ChipTestingSamples.csv",samples1 = c(3:4),samples2=c(9:11),namesOne="BF_Ac",namesTwo="RVFV_Ac")
 
-#'samples1' and 'samples2' are indices which indicate the samples to compare. 
-#The numbers are equivalent to rows in the csv or dataframe, excluding headers
-#As a reminder, R is 1 indexed so the first object will be 1
+DefaultDBA=readRDS("BF_AcvsRVFV_Ac.RDS")
 
-#'plotting' simply determines whether or not plots will be displayed
-#It is turned off by default
 
-#'saving' allows the user to save intermediate files such as 
-#Take care as if the name is the same as a previous file THE OLD FILE WILL BE OVERWRITTEN
-#If the file summary file is to be saved, users should do this themselves.
+#Example of selecting samples from larger metadata sheet and using them to run diffbind
+allSamps=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
+day3MeSamps=allSamps[allSamps$Day==3,]
+day3MeSamps=day3MeSamps[day3MeSamps$Factor=="H3K9Me3",]
 
-#'fromFile' is a boolean which indicates whether the file provided 
-#should be interpreted as a an RDS file holding the counts object
-#This is mainly to save time, as the process can
-#The samples compared in the contrast can change, but expected peak size
-#CANNOT be changed when reading from a file
+
+day7MeSamps=allSamps[allSamps$Day==7,]
+day7MeSamps=day7MeSamps[day7MeSamps$Factor=="H3K9Me3",]
+day7MeSamps=day7MeSamps[day7MeSamps$RiftExperiment==FALSE,]
+
+
+me_day3=runDiffbind(day3MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day3",samples1=1:3,samples2=4:5)
+
+me_day7=runDiffbind(day7MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day7",samples1=1:3,samples2=4:6)
+

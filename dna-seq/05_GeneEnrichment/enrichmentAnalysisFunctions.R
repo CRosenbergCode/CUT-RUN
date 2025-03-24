@@ -166,6 +166,9 @@ multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_2_28.gmt",re
 plotEnrichment(multiGMT$paths[["IMM"]],
                multiGMT$genes) + labs(title="Immune Genes")
 
+
+#Enrichment Score Plot Subsetted by significance
+multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_2_28.gmt",returnMultiple=TRUE)
 selected_rows=multiGMT$table[multiGMT$table$padj<0.05,]
 selected_rows = selected_rows %>%
   arrange(padj)
@@ -179,6 +182,69 @@ plotGseaTable(selected_GO, multiGMT$genes, selected_rows,
 #Write description
 
 
+rnaCompareGSEA = function(fileList,orgData,rankMetric = "pval",goCat="All",pval=0.5,plotting=FALSE,sampNames=c(),minSize=15,maxSize=500){
+  getRankedGenes = function(rnaFile){
+    myDEresults=read.csv(rnaFile)
+    if(rankMetric == "pval"){
+      myDEresults=read.csv(rnaFile)
+      myDEresults=myDEresults[!is.na(myDEresults$pvalue),]
+      newRank_pvalueAndFC = -log10(myDEresults$pvalue) *sign(myDEresults$log2FoldChange)#* abs(myDEresults$log2FoldChange)#
+      names(newRank_pvalueAndFC) = myDEresults$geneID
+      newRank_pvalueAndFC = newRank_pvalueAndFC[order(newRank_pvalueAndFC,decreasing = TRUE)]
+    }
+    if(rankMetric == "log2fc"){
+      myDEresults=read.csv(rnaFile)
+      myDEresults=myDEresults[!is.na(myDEresults$pvalue),]
+      newRank_pvalueAndFC = myDEresults$log2FoldChange #*sign(myDEresults$log2FoldChange)#* abs(myDEresults$log2FoldChange)#
+      names(newRank_pvalueAndFC) = myDEresults$geneID
+      newRank_pvalueAndFC = newRank_pvalueAndFC[order(newRank_pvalueAndFC,decreasing = TRUE)]
+    }
+    if(rankMetric == "both"){
+      myDEresults=read.csv(rnaFile)
+      myDEresults=myDEresults[!is.na(myDEresults$pvalue),]
+      newRank_pvalueAndFC = myDEresults$log2FoldChange * -log10(myDEresults$pvalue) #*sign(myDEresults$log2FoldChange)#* abs(myDEresults$log2FoldChange)#
+      names(newRank_pvalueAndFC) = myDEresults$geneID
+      newRank_pvalueAndFC = newRank_pvalueAndFC[order(newRank_pvalueAndFC,decreasing = TRUE)]
+    }
+    
+
+    return(newRank_pvalueAndFC)
+  }
+  
+  
+  
+  
+  if(length(sampNames)==0){
+    sampNames=paste0("Sample_", 1:length(fileList))
+  }
+  
+  pre_genes = lapply(fileList,getRankedGenes)#function(i) as.data.frame(i)$geneId)
+  names(pre_genes)=sampNames
+  compGO <- compareCluster(geneCluster = pre_genes,
+                           fun = "gseGO",
+                           keyType = "GID", 
+                           OrgDb = orgData, 
+                           ont = goCat, 
+                           minGSSize    = minSize,
+                           maxGSSize    = maxSize,
+                           pvalueCutoff = pval,
+                           pAdjustMethod = "BH")#, readable=TRUE)
+  if(plotting){
+    dotplot(compGO, showCategory = 10, title = "GO Pathway Enrichment Analysis") 
+  }
+  return(compGO)
+  return 
+}
+
+
+testCompareRNA=rnaCompareGSEA(c("DAY1_BFvSFdresultsp10_ms-PEannotated.csv","RNAseqPilot.csv"),orgData=org.Aaegypti.eg.db)
+
+dotplot(testCompareRNA,showCategory = 5)
+
+
+#"DAY1_BFvSFdresultsp10_ms-PEannotated.csv"
+#RNAseqPilot.csv
+
 chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5){
   plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile=txFile){
     samplefiles <- as.list(peakFileList)
@@ -187,7 +253,7 @@ chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",
     
     
     peakAnnoList <- lapply(samplefiles, annotatePeak, TxDb=testtx, 
-                           tssRegion=c(-1000, 1000), verbose=FALSE)
+                           tssRegion=c(-2000, 2000), verbose=FALSE)
     
     
     if(verbose){
@@ -229,6 +295,7 @@ chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",
 
 #Example Usage
 
+
 testORA=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="BP")
 
 testMF=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="MF")
@@ -238,6 +305,12 @@ head(testORA)
 
 dotplot(testORA,showCategory = 5)
 cnetplot(testORA,showCategory = 2)
+
+head(testMF)
+dotplot(testMF,showCategory = 5)
+cnetplot(testMF,showCategory = 5)
+
+
 
 #Has very small text by default, will need to manually adjust size per plot
 #Size of test is inversely proportional to the value of cex. Return to default of 1 after calling
@@ -253,7 +326,7 @@ goplot(testORA)
 #goCat represents which of the three subontologies (CC,MF,BP) to include in the analysis. All three are included by default
 #orgData is an organism db object, which should be referred to using the same name as its library
 
-compareChipGO=function(fileList,orgData,weetxFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,plotting=FALSE,sampNames=c()){
+compareChipGO=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,plotting=FALSE,sampNames=c()){
   plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff"){
     samplefiles <- as.list(peakFileList)
     
@@ -261,7 +334,7 @@ compareChipGO=function(fileList,orgData,weetxFile="VectorBase-68_AaegyptiLVP_AGW
     
     
     peakAnnoList <- lapply(peakFileList, annotatePeak, TxDb=testtx, 
-                           tssRegion=c(-1000, 1000), verbose=FALSE)
+                           tssRegion=c(-2000, 2000), verbose=FALSE)
     
     
     if(verbose){
@@ -281,21 +354,10 @@ compareChipGO=function(fileList,orgData,weetxFile="VectorBase-68_AaegyptiLVP_AGW
   }
   exampleDistances=plotPeakDistances(fileList,txFile=txFile,sampNames = sampNames)
   pre_genes = lapply(exampleDistances, function(i) as.data.frame(i)$geneId)
-  
-  #genes = pre_genes
-  #if(length(sampNames)>0){
-  #  names(genes)=sampNames
-  #}
-  #genes = pre_genes
-  #names(genes)=sampNames
-  #genes = list(pre_genes)
-  #names(genes)=sampNames
-  for(i in seq(length(fileList))){
-    genes[[i]]=pre_genes[[i]]
-  }
-  names(genes)=sampNames
+
+  names(pre_genes)=sampNames
   #genes = list(X1=unique(pre_genes[[1]]),X2=unique(pre_genes[[2]]))#list(X1=exampleDistances[1],X2=exampleDistances[2])
-  compGO <- compareCluster(geneCluster = genes, 
+  compGO <- compareCluster(geneCluster = pre_genes,#genes, 
                            #universe=backgroundids,
                            fun = "enrichGO",
                            keyType = "GID", 
@@ -304,7 +366,7 @@ compareChipGO=function(fileList,orgData,weetxFile="VectorBase-68_AaegyptiLVP_AGW
                            qvalueCutoff = qval, 
                            pAdjustMethod = "BH")#, readable=TRUE)
   if(plotting){
-    dotplot(compGO, showCategory = 10, title = "GO MF Pathway Enrichment Analysis") 
+    dotplot(compGO, showCategory = 10, title = "GO Pathway Enrichment Analysis") 
   }
   return(compGO)
 }
@@ -327,8 +389,22 @@ testcompare5=compareChipGO(samplefiles5,org.Aaegypti.eg.db,goCat="MF",sampNames 
 
 dotplot(testcompare5,showCategory = 5)
 
+head(testcompare5)
 
 
+metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
+d7_me_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
+d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
+
+samplefiles=d7_me_Pilot$Peaks
+
+
+testcompare8=compareChipGO(samplefiles,org.Aaegypti.eg.db,goCat="MF")#,sampNames = c("BF_Ac_1","BF_Ac_2","RVFV_Ac_1_1","RVFV_1_1","RVFV_Ac_2"))
+
+dotplot(testcompare8,showCategory = 5)
+
+
+#Plotting to look at further
 
 #p1 <- heatplot(edox, showCategory=5)
 #p2 <- heatplot(edox, foldChange=geneList, showCategory=5)
