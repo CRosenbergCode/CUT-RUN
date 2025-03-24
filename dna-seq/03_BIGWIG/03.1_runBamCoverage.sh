@@ -25,3 +25,7 @@ do
       --extendReads
 done
 #Adjust --binSize to adjust how granular the result bigwig file is, higher is lower resolution
+
+#RPGC (reads per genome coverage) is the normalization metric chosen. Normalization methods are generally equivalent other than scaling factor.
+
+#effectiveGenomeSize of 12200000000 is based upon the Aedes aegypti genome and should be changed for other organisms
