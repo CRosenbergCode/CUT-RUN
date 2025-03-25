@@ -240,6 +240,7 @@ rnaCompareGSEA = function(fileList,orgData,rankMetric = "pval",goCat="All",pval=
 }
 
 
+
 testCompareRNA=rnaCompareGSEA(c("DAY1_BFvSFdresultsp10_ms-PEannotated.csv","RNAseqPilot.csv"),orgData=org.Aaegypti.eg.db)
 
 dotplot(testCompareRNA,showCategory = 5)
@@ -295,7 +296,7 @@ chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",
                   OrgDb = orgData, 
                   ont = goCat, 
                   pAdjustMethod = "BH", 
-                  qvalueCutoff = qval, 
+                  pvalueCutoff = qval,
                   readable = TRUE)
   return(ego)
 }
@@ -394,7 +395,7 @@ compareChipGO=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.g
                            keyType = "GID", 
                            OrgDb = orgData, 
                            ont = goCat, 
-                           qvalueCutoff = qval, 
+                           pvalueCutoff = qval,
                            pAdjustMethod = "BH")#, readable=TRUE)
   if(plotting){
     dotplot(compGO, showCategory = 10, title = "GO Pathway Enrichment Analysis") 
@@ -525,7 +526,7 @@ d7_ac_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
 d7_ac_Pilot=d7_ac_Pilot[d7_ac_Pilot$Factor=="H3K27Ac",]
 d7_ac_Pilot_Peaks=d7_ac_Pilot$Peaks
 
- 
+
 
 
 testPresenceAbsence=presenceAbsenceORA(d7_ac_Pilot_Peaks[3],d7_ac_Pilot_Peaks[4],orgData=org.Aaegypti.eg.db,goCat="MF")
@@ -540,3 +541,101 @@ testPresenceAbsence=presenceAbsenceORA(d7_me_Pilot_Peaks[3],d7_me_Pilot_Peaks[4]
 dotplot(testPresenceAbsence)
 
 head(testPresenceAbsence)
+
+
+
+
+
+#TODO
+#Write documentation
+ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,promoterOnly=TRUE,minSize=15,maxSize=500,plotting=TRUE){
+  
+  tempFile="tempDiffbind.tsv"
+  
+  testtx=makeTxDbFromGFF(txFile)
+  
+  myDiffbind=read.csv(peakFile)
+  slimDiffbind=myDiffbind[2:4]
+  slimDiffbind["name"]=myDiffbind[[1]]
+  slimDiffbind["score"]=0
+  slimDiffbind["strand"]="."
+  slimDiffbind["signalValue"]=myDiffbind$Fold
+  slimDiffbind["pValue"]=-log10(myDiffbind$p.value)
+  slimDiffbind["qValue"]=-log10(myDiffbind$FDR)
+  slimDiffbind["peak"]=-1
+  
+  write.table(slimDiffbind,tempFile,sep="\t",row.names=FALSE)
+  
+  
+  myPeaks=annotatePeak(tempFile,tssRegion = c(-2000,2000),TxDb=testtx,verbose=FALSE)
+  
+  maybepeakformat=read_tsv("testDiffbind.tsv")
+  
+  
+  myPeaks=annotatePeak("testDiffbind.tsv",tssRegion = c(-2000,2000),TxDb=testtx,verbose=FALSE)
+  
+  
+  ex_annot = as.data.frame(myPeaks)#myPeaks@anno
+  promoterOnly=TRUE
+  if(promoterOnly){
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 2000,]
+  }
+  #Initially sorted by -log10(pvalue) to keep most significant gene for category, but could change for other methods 
+  ex_annot$pValue
+  ex_annot=ex_annot %>%
+    arrange(desc(pValue))
+  
+  unique_annot=ex_annot[!duplicated(ex_annot$geneId),]
+  
+  if(rankMetric=="pval"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$pValue*sign(unique_annot$signalValue)))
+    
+    myrankedpval=unique_annot$pValue*sign(unique_annot$signalValue)
+  }
+  
+  if(rankMetric=="foldchange"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$signalValue))
+    
+    myrankedpval=unique_annot$signalValue
+  }
+  
+  if(rankMetric=="both"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$pValue*unique_annot$signalValue))
+    myranked=unique_annot$pValue*unique_annot$signalValue
+  }
+  
+  
+  names(myrankedpval)=unique_annot$geneId
+  
+  #Significantly better results with duplicate peaks
+  set.seed(2025)
+  ego <- gseGO(geneList     = myranked,
+               OrgDb        = orgData,
+               keyType="GID",
+               ont          = goCat,
+               minGSSize    = minSize,
+               maxGSSize    = maxSize,
+               pvalueCutoff = 0.5,
+               verbose      = TRUE)
+  if(plotting){
+    dotplot(ego) 
+  }
+  
+  if(file.exists(tempFile)) {
+    file.remove(tempFile)
+  }
+  return(ego)
+}
+
+#Example Usage
+#The input file is the output of diffbind, written to a csv
+mychip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "BP")
+
+dotplot(mychip)
+
+mychip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "MF")
+
+dotplot(mychip)
+
+
+
