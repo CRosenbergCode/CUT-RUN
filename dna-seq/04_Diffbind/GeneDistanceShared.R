@@ -72,11 +72,15 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   
 
   if(diffExt == "csv"){
-    sigResDF=read.csv(diffPeakFile)
+    sigResDF=read.csv(diffPeakFile)#,quote="")
     dnaStart=sigResDF$start
     dnaEnd=sigResDF$end
     dnaChrom=sigResDF$chr
     dnaFold=sigResDF$Fold
+    
+    # Added 4/1/2025
+    pvalue=sigResDF$p.value
+    fdr=sigResDF$FDR
   }
   else{
     sigResDF=as.data.frame(readr::read_tsv(diffPeakFile,col_names=FALSE),stringsAsFactors=FALSE)
@@ -84,9 +88,8 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
     dnaEnd=sigResDF[[3]]
     dnaChrom=as.character(sigResDF[[1]])
     dnaFold=-sigResDF[[8]]
-    #dnaStart=sigResDF$start
-    #dnaEnd=sigResDF$end
-    #dnaChrom=sigResDF$chr
+    pvalue=sigResDF[[9]]
+    fdr=sigResDF[[10]]
   }
   
   rnaStart=rnaDF[[startCol]]
@@ -240,7 +243,7 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   over5prime=over5prime[withinDist]
   reducedDF["Peak Number"]=dnaSamp
   reducedDF["5 Prime Dist"]=dna5Prime
-  reducedDF["3 Prim Dist"]=dna3Prime
+  reducedDF["3 Prime Dist"]=dna3Prime
   reducedDF["Peak Inside Gene"]=insideGene
   
   geneID=rep(0,length(reducedDF$'Peak Start'))
@@ -300,11 +303,18 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   
   reducedDF["Fold Change"]=foldchange
   
+  # Added 4/1/2025
+  peak_pvalues=rep(0,length(dnaSamp))
+  peak_fdrs=rep(0,length(dnaSamp))
+  
   peakStart=rep(0,length(dnaSamp))
   peakEnd=rep(0,length(dnaSamp))
   for(i in seq(1,length(dnaSamp))){
     peakStart[i]=as.integer(dnaStart[dnaSamp[i]])
     peakEnd[i]=as.integer(dnaEnd[dnaSamp[i]])
+    # Added 4/1/2025
+    peak_pvalues[i]=as.double(pvalue[dnaSamp[i]])
+    peak_fdrs[i]=as.double(fdr[dnaSamp[i]])
   }
   reducedDF["Peak Start"]=peakStart
   reducedDF["Peak End"]=peakEnd
@@ -331,6 +341,10 @@ getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="C
   reducedDF["Peak Start Offset"]=peakStartOffset
   reducedDF["Peak End Offset"]=peakEndOffset
     
+  # Added 4/1/2025
+  reducedDF["p-value"]=peak_pvalues
+  reducedDF["FDR"]=peak_fdrs
+  
   if(topN != -1){
     reducedDF=reducedDF[reducedDF["Peak Number"]<=topN,] 
   }
@@ -356,3 +370,14 @@ ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac
 
 #Look for matches between all peaks in a set of diffbind output, using an old bed file
 ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,distance = 10000,inGene=FALSE)
+
+#Examples using peaks from the sample file
+allSamps=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
+PilotAcSamps=allSamps[allSamps$Factor=="H3K27Ac",]
+PilotAcSamps=PilotAcSamps[PilotAcSamps$RiftExperiment==TRUE,]
+
+pilotMergedRVFVAcPeaks=PilotAcSamps[PilotAcSamps$Condition=="RVFV",]$Peaks[1]
+pilotMergedBFAcPeaks=PilotAcSamps[PilotAcSamps$Condition=="BF",]$Peaks[1]
+rvfvAcDistant=getGeneDistances("Aedes68Genes.bed",pilotMergedRVFVAcPeaks,distance = 200000,nearEnd = TRUE,inGene=FALSE,bedFormat = TRUE)
+
+bfAcDistant=getGeneDistances("Aedes68Genes.bed",pilotMergedBFAcPeaks,distance = 100000,nearEnd = TRUE,inGene=FALSE,bedFormat = TRUE)
