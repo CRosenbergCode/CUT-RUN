@@ -10,6 +10,11 @@ library(GenomicFeatures)
 library(ChIPseeker)
 library(BiocParallel)
 
+#if (!require("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+#BiocManager::install(version = "3.20")
+
+
 #Necessary for Windows machines
 register(SerialParam())
 
@@ -24,10 +29,52 @@ library(org.Aaegypti.eg.db)
 #If using a different orgDB than Aedes aegypti, it must be installed and loaded as seen above
 
 
+##FUNCTIONS IN THIS FILE
+
+#rnaGSEA: perform GSEA analysis on single file, which should be differential expression output (generally DESeq2)
+#Should be used for GO annotations
+#Requires an OrgDB library
+
+#gmtGSEA: As above, but using a GMT file instead of a GMT. Should be used for custom annotations
+#Requires a GMT file
+
+#rnaCompareGSEA: As with rnaGSEA, but with multiple files instead of one. Should be used to compare results side-by-side
+#PLEASE NOTE THIS HELPS VISUALIZE MULTIPLE SAMPLES, BUT RESULTS ARE SIMPLY GSEA FOR INDIVIDUAL SAMPLES. THERE IS NO DIRECT STATISTICAL COMPARISON BETWEEN SAMPLES
+#Requires an OrgDB library
+
+#chipORA: Perform overrepresentation analysis using the presence of peaks, based on a peak file
+#Requires a gff file that includes all genomic features, not just genes and an OrgDB library
+#Will fail without ability to contact NCBI website through internet
+
+#compareChipGO: As above, but with multiple peak files instead of one. Should be used to compare results side-by-side
+#PLEASE NOTE THIS HELPS VISUALIZE MULTIPLE SAMPLES, BUT RESULTS ARE SIMPLY GSEA FOR INDIVIDUAL SAMPLES. THERE IS NO DIRECT STATISTICAL COMPARISON BETWEEN SAMPLES
+#Requires a gff file that includes all genomic features, not just genes and an OrgDB library
+#Will fail without ability to contact NCBI website through internet
+
+#presenceAbsenceORA: Perform overrepresentation analysis using the set of genes which have peaks in one file but not another
+#Unlike the previous function, this can be used to directly compare two samples
+#Requires a gff file that includes all genomic features, not just genes and an OrgDB library
+#Will fail without ability to contact NCBI website through internet
+
+#chipGSEA: perform GSEA analysis on single file, which should be differential binding output (generally Diffbind)
+#Should be used for GO annotations
+#Requires a gff file that includes all genomic features, not just genes and an OrgDB library
+#Will fail without ability to contact NCBI website through internet
+
+
+#Generally, plotting functions should be useable on the results of any of these functions
+
+
+
+
+
+
+
+
 #rnaFile is a csv which contains the results of differential gene expression. Generally the output of DEseq analysis
 #rankMetric is the the choice of ranking for . Currently only supports a single, but more will be added in future
 #goCat represents which of the three subontologies (CC,MF,BP) to include in the analysis. All three are included by default
-rnaGSEA = function(rnaFile,orgData,rankMetric = "pval",goCat="All",minSize=15,maxSize=500,rankedList=c()){
+rnaGSEA = function(rnaFile,orgData,rankMetric = "pval",goCat="All",minSize=15,maxSize=500,rankedList=c(),keycol="GID"){
   myDEresults=read.csv(rnaFile)
   if(rankMetric == "pval"){
     myDEresults=read.csv(rnaFile)
@@ -50,26 +97,22 @@ rnaGSEA = function(rnaFile,orgData,rankMetric = "pval",goCat="All",minSize=15,ma
     names(newRank_pvalueAndFC) = myDEresults$geneID
     newRank_pvalueAndFC = newRank_pvalueAndFC[order(newRank_pvalueAndFC,decreasing = TRUE)]
   }
-  #return(newRank_pvalueAndFC)
-  #myDEresults=read.csv(rnaFile)
-  #myDEresults=myDEresults[!is.na(myDEresults$padj),]
-  #newRank_pvalueAndFC = -log10(myDEresults$padj) *sign(myDEresults$log2FoldChange)#* abs(myDEresults$log2FoldChange)#
-  #names(newRank_pvalueAndFC) = myDEresults$geneID
-  #newRank_pvalueAndFC = newRank_pvalueAndFC[order(newRank_pvalueAndFC,decreasing = TRUE)]
+
   set.seed(2025)
   egoCC <- gseGO(geneList     = newRank_pvalueAndFC,
                  OrgDb        = orgData,
-                 keyType="GID",
+                 keyType=keycol,
                  ont          = goCat,
                  minGSSize    = minSize,
                  maxGSSize    = maxSize,
                  pvalueCutoff = 0.5,
                  verbose      = TRUE)
   
-  head(egoCC)
   
-  goplot(egoCC)
-  dotplot(egoCC)+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))#+theme(text = element_text(size = ))
+  #head(egoCC)
+  
+  #goplot(egoCC)
+  #dotplot(egoCC)+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))#+theme(text = element_text(size = ))
   return(egoCC)
 }
 
@@ -83,12 +126,6 @@ goplot(exampleGo,showCategory = 5)
 dotplot(exampleGo)
 #Showing first few GO categories that are most significantly differentially expressed
 head(exampleGo)
-
-
-sfGo=rnaGSEA("DAY1_BFvSFdresultsp10_ms-PEannotated.csv",goCat="MF",orgData = org.Aaegypti.eg.db)
-head(sfGo)
-goplot(sfGo)
-dotplot(sfGo)
 
 
 
@@ -181,7 +218,7 @@ selected_rows$pathway
 plotGseaTable(selected_GO, multiGMT$genes, selected_rows, 
               gseaParam=0.5,colwidths =  c(2, 5, 0.8, 0, 1.2))+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))
 
-#TODO\
+#TODO
 #Write description
 
 
@@ -240,14 +277,17 @@ rnaCompareGSEA = function(fileList,orgData,rankMetric = "pval",goCat="All",pval=
 }
 
 
-
+#Example Usage
 testCompareRNA=rnaCompareGSEA(c("DAY1_BFvSFdresultsp10_ms-PEannotated.csv","RNAseqPilot.csv"),orgData=org.Aaegypti.eg.db)
 
 dotplot(testCompareRNA,showCategory = 5)
 
+testCompareRNA@compareClusterResult
 
-#"DAY1_BFvSFdresultsp10_ms-PEannotated.csv"
-#RNAseqPilot.csv
+
+
+#TODO
+#Write description
 
 chipORA = function(peakFile,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,promoterOnly=TRUE){
   plotPeakDistances = function(peakFileList,sampNames=c(),verbose=TRUE,txFile=txFile){
@@ -312,7 +352,7 @@ testORA=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_
 dotplot(testORA,showCategory = 5)
 
 
-testMF=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="MF")
+testMF=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ac_Rep1_Control_peaks.narrowPeak",org.Aaegypti.eg.db,goCat="MF",promoterOnly = FALSE)
 
 
 head(testORA)
@@ -324,6 +364,7 @@ head(testMF)
 dotplot(testMF,showCategory = 5)
 cnetplot(testMF,showCategory = 5)
 
+testMF=chipORA("C:\\Users\\hunte\\Desktop\\AltChip\\PilotAcBF50K_200K_Distal.peakFile",org.Aaegypti.eg.db,goCat="MF",promoterOnly = FALSE)
 
 
 #Has very small text by default, will need to manually adjust size per plot
@@ -411,18 +452,19 @@ samplefiles5=c("C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_A
               "C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\RVFV_Ac_Rep1_1_Control_peaks.narrowPeak","C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\RVFV_Ac_Rep1_2_Control_peaks.narrowPeak",
               "C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\RVFV_Ac_Rep2_Control_peaks.narrowPeak")
 
-
+#Compare two files
 testcompare2=compareChipGO(samplefiles2,org.Aaegypti.eg.db,goCat="MF")
 
 dotplot(testcompare2,showCategory = 5)
 
+#Compare five files
 testcompare5=compareChipGO(samplefiles5,org.Aaegypti.eg.db,goCat="MF",sampNames = c("BF_Ac_1","BF_Ac_2","RVFV_Ac_1_1","RVFV_1_1","RVFV_Ac_2"))
 
 dotplot(testcompare5,showCategory = 5)
 
 head(testcompare5)
 
-
+#Use the metadata file to grab peaks data for 8 files
 metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
 d7_me_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
 d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
@@ -431,6 +473,10 @@ d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
 testcompare8=compareChipGO(samplefiles,org.Aaegypti.eg.db,goCat="MF")#,sampNames = c("BF_Ac_1","BF_Ac_2","RVFV_Ac_1_1","RVFV_1_1","RVFV_Ac_2"))
 
 dotplot(testcompare8,showCategory = 5)
+
+testcompareDistalPilot=compareChipGO(c("PilotAcRVFV50K_200K_Distal.peakFile","PilotAcBF50K_200K_Distal.peakFile"),org.Aaegypti.eg.db,goCat="MF",promoterOnly = FALSE,sampNames = c("Distal RVFV_Ac_D7","Distal BF_Ac_D7"))
+
+dotplot(testcompareDistalPilot,showCategory = 5)
 
 
 #Plotting to look at further
@@ -444,7 +490,8 @@ dotplot(testcompare8,showCategory = 5)
 
 
 
-
+#TODO
+#Write description
 
 #Implemented, but not inspiring results
 
@@ -504,32 +551,16 @@ presenceAbsenceORA = function(peakFile1,peakFile2,orgData,txFile="VectorBase-68_
 }
 
 
-
-
+#Example usage
 metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
 d7_me_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
 d7_me_Pilot=d7_me_Pilot[d7_me_Pilot$Factor=="H3K9Me3",]
 d7_me_Pilot_Peaks=d7_me_Pilot$Peaks
 
-testcompare2=compareChipGOFake(samplefiles2,org.Aaegypti.eg.db,goCat="MF")
-
-samp1=as.data.frame(testcompare2$Sample_1)
-
-samp1_peaks=samp1[abs(samp1$distanceToTSS) <= 2000,]$geneId
-
-samp2=as.data.frame(testcompare2$Sample_2)
-samp2_peaks=samp2[abs(samp2$distanceToTSS) <= 2000,]$geneId
-diffPeaks=samp1_peaks[!samp1_peaks %in% samp2_peaks]
-
 metaFile=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
 d7_ac_Pilot=metaFile[metaFile$RiftExperiment==TRUE,]
 d7_ac_Pilot=d7_ac_Pilot[d7_ac_Pilot$Factor=="H3K27Ac",]
 d7_ac_Pilot_Peaks=d7_ac_Pilot$Peaks
-
-
-
-
-testPresenceAbsence=presenceAbsenceORA(d7_ac_Pilot_Peaks[3],d7_ac_Pilot_Peaks[4],orgData=org.Aaegypti.eg.db,goCat="MF")
 
 
 
@@ -543,19 +574,17 @@ dotplot(testPresenceAbsence)
 head(testPresenceAbsence)
 
 
-
-
-
 #TODO
 #Write documentation
-ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,promoterOnly=TRUE,minSize=15,maxSize=500,plotting=TRUE){
+ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",goCat="All",qval=0.5,promoterOnly=TRUE,enhancerOnly=FALSE,minSize=15,maxSize=500,plotting=TRUE,dists=c(-2000,2000)){
   
   tempFile="tempDiffbind.tsv"
   
   testtx=makeTxDbFromGFF(txFile)
   
   myDiffbind=read.csv(peakFile)
-  slimDiffbind=myDiffbind[2:4]
+  slimDiffbind=myDiffbind[c("chr","start","end")]
+
   slimDiffbind["name"]=myDiffbind[[1]]
   slimDiffbind["score"]=0
   slimDiffbind["strand"]="."
@@ -567,19 +596,25 @@ ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_Aae
   write.table(slimDiffbind,tempFile,sep="\t",row.names=FALSE)
   
   
-  myPeaks=annotatePeak(tempFile,tssRegion = c(-2000,2000),TxDb=testtx,verbose=FALSE)
+  myPeaks=annotatePeak(tempFile,tssRegion = dists,TxDb=testtx,verbose=FALSE)
   
-  maybepeakformat=read_tsv("testDiffbind.tsv")
-  
-  
-  myPeaks=annotatePeak("testDiffbind.tsv",tssRegion = c(-2000,2000),TxDb=testtx,verbose=FALSE)
-  
+  print("PastPeakAnnotation!")
   
   ex_annot = as.data.frame(myPeaks)#myPeaks@anno
-  promoterOnly=TRUE
+  print("The number of rows pre-filtering is")
+  print(nrow(ex_annot))
   if(promoterOnly){
-    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 2000,]
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= dists[2],]
   }
+  #Best way to incorporate distances?
+  #Should this override promoter if TRUE since non-default?
+  else if(enhancerOnly){
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) >= 50000,]
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 200000,]
+    ex_annot=ex_annot[ex_annot$annotation=="Distal Intergenic",]
+  }
+  print("The number of rows after filtering is")
+  print(nrow(ex_annot))
   #Initially sorted by -log10(pvalue) to keep most significant gene for category, but could change for other methods 
   ex_annot$pValue
   ex_annot=ex_annot %>%
@@ -587,25 +622,28 @@ ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_Aae
   
   unique_annot=ex_annot[!duplicated(ex_annot$geneId),]
   
+  print("After adjusting for uniqueness")
+  print(nrow(unique_annot))
+  
   if(rankMetric=="pval"){
     unique_annot=arrange(unique_annot,desc(unique_annot$pValue*sign(unique_annot$signalValue)))
     
-    myrankedpval=unique_annot$pValue*sign(unique_annot$signalValue)
+    myranked=unique_annot$pValue*sign(unique_annot$signalValue)
   }
   
   if(rankMetric=="foldchange"){
     unique_annot=arrange(unique_annot,desc(unique_annot$signalValue))
     
-    myrankedpval=unique_annot$signalValue
+    myranked=unique_annot$signalValue
   }
   
   if(rankMetric=="both"){
     unique_annot=arrange(unique_annot,desc(unique_annot$pValue*unique_annot$signalValue))
     myranked=unique_annot$pValue*unique_annot$signalValue
   }
+  print("Ready to GO!")
   
-  
-  names(myrankedpval)=unique_annot$geneId
+  names(myranked)=unique_annot$geneId
   
   #Significantly better results with duplicate peaks
   set.seed(2025)
@@ -615,7 +653,7 @@ ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_Aae
                ont          = goCat,
                minGSSize    = minSize,
                maxGSSize    = maxSize,
-               pvalueCutoff = 0.5,
+               pvalueCutoff = 0.9,
                verbose      = TRUE)
   if(plotting){
     dotplot(ego) 
@@ -629,13 +667,12 @@ ChIPGSEA=function(peakFile,orgData,rankMetric = "pval",txFile="VectorBase-68_Aae
 
 #Example Usage
 #The input file is the output of diffbind, written to a csv
+
+#Using only promoter regions
 mychip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "BP")
 
-dotplot(mychip)
 
-mychip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "MF")
+#Using only putative enhancer regions
+bpchip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "BP",promoterOnly = FALSE,enhancerOnly = TRUE)
 
-dotplot(mychip)
-
-
-
+dotplot(bpchip)
