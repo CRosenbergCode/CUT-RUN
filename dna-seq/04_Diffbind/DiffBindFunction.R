@@ -81,7 +81,7 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
   
   if(saving){
     if(CSV){
-      write.csv(resDF,paste(namesOne,"vs",namesTwo,".csv",sep=""), row.names=FALSE)
+      write.csv(resDF,paste(namesOne,"vs",namesTwo,".csv",sep=""))#, row.names=FALSE)
     }
     #Change to before to allow different contrasts?
     saveRDS(contrastOnly,paste(namesOne,"vs",namesTwo,".RDS",sep=""))
@@ -102,6 +102,10 @@ runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,s
         plot(analizOnly)
         
         #Error handling?
+        
+        
+        
+        
         
         #Error handling?
         if(edger==TRUE){
@@ -148,4 +152,3 @@ day7MeSamps=day7MeSamps[day7MeSamps$RiftExperiment==FALSE,]
 me_day3=runDiffbind(day3MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day3",samples1=1:3,samples2=4:5)
 
 me_day7=runDiffbind(day7MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day7",samples1=1:3,samples2=4:6)
-
