@@ -115,6 +115,32 @@ rnaGSEA = function(rnaFile,orgData,rankMetric = "pval",goCat="All",minSize=15,ma
   #dotplot(egoCC)+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))#+theme(text = element_text(size = ))
   return(egoCC)
 }
+library(org.Ctarsalis.eg.db)
+exampleGo=rnaGSEA("CulexAdultPlaqueTable_4_2_2025.csv",goCat="MF",orgData = org.Ctarsalis.eg.db,rankMetric ="both")
+
+examplePCR=rnaGSEA("CulexAdultPCRTable_4_2_2025.csv",goCat="MF",orgData = org.Ctarsalis.eg.db,rankMetric ="both")
+
+dotplot(examplePCR)
+
+#CulexAdultPCRTable_4_2_2025.csv
+
+
+examplePCR=rnaGSEA("Mock22_Mock30_DE_PVal.csv",goCat="BP",orgData = org.Ctarsalis.eg.db,rankMetric = "both")#"both")
+
+examplePCR=rnaGSEA("Mock22_Mock30_DE_PVal.csv",goCat="BP",orgData = org.Ctarsalis.eg.db,rankMetric = "both")#"both")
+
+#Mock22_Mock30_DE_PVal.csv
+
+head(examplePCR)
+
+dotplot(examplePCR)
+
+
+#Plotting 
+goplot(exampleGo,showCategory = 5)
+dotplot(exampleGo)
+
+#CulexAdultPlaqueTable_4_2_2025.csv
 
 #Example Usage
 exampleGo=rnaGSEA("RNAseqPilot.csv",goCat="BP",orgData = org.Aaegypti.eg.db)
@@ -133,7 +159,7 @@ head(exampleGo)
 fc=rnaGSEA("DAY1_BFvSFdresultsp10_ms-PEannotated.csv",goCat="MF",rankMetric ="log2fc",orgData = org.Aaegypti.eg.db)
 goplot(fc)
 dotplot(fc)
-head(fc)
+example=head(fc)
 
 #Using the product of log2 fold change and -log10(pvalue)
 bothVals=rnaGSEA("DAY1_BFvSFdresultsp10_ms-PEannotated.csv",goCat="MF",rankMetric ="both",orgData = org.Aaegypti.eg.db)
@@ -155,7 +181,7 @@ head(bothVals)
 #                              Called from: .checkKeysAreWellFormed(keys)
 
 
-
+#Add the no gene ID error
 
 
 
@@ -676,3 +702,136 @@ mychip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat 
 bpchip=ChIPGSEA("PilotNewMerged_Results.csv",orgData = org.Aaegypti.eg.db,goCat = "BP",promoterOnly = FALSE,enhancerOnly = TRUE)
 
 dotplot(bpchip)
+
+bpchip=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "BP",promoterOnly = TRUE,enhancerOnly = FALSE)
+
+dotplot(bpchip)
+
+
+bpchipEnhancer=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "BP",promoterOnly = FALSE,enhancerOnly = TRUE)
+
+dotplot(bpchipEnhancer)
+
+
+mfchip=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "MF",promoterOnly = TRUE,enhancerOnly = FALSE)
+
+dotplot(mfchip)
+
+
+mfchipEnhancer=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "MF",promoterOnly = FALSE,enhancerOnly = TRUE)
+
+dotplot(mfchipEnhancer)
+
+#BF_Ac_D3vD7DiffbindResults.csv
+
+compareChIPGSEA=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",rankMetric = "pval",goCat="All",qval=0.5,plotting=FALSE,sampNames=c(),promoterOnly=TRUE,enhancerOnly=FALSE,dists=c(-2000,2000),keycol="GID"){
+  #myRankedGenes=vector("list", length = length(fileList))
+  tempFile="tempDiffbind.tsv"
+  testtx=makeTxDbFromGFF(txFile)
+  count=0
+  chipgseahelper=function(diffbindFile){
+    
+    myDiffbind=read.csv(diffbindFile)
+    slimDiffbind=myDiffbind[c("chr","start","end")]
+    
+    slimDiffbind["name"]=myDiffbind[[1]]
+    slimDiffbind["score"]=0
+    slimDiffbind["strand"]="."
+    slimDiffbind["signalValue"]=myDiffbind$Fold
+    slimDiffbind["pValue"]=-log10(myDiffbind$p.value)
+    slimDiffbind["qValue"]=-log10(myDiffbind$FDR)
+    slimDiffbind["peak"]=-1
+    
+    write.table(slimDiffbind,tempFile,sep="\t",row.names=FALSE)
+    
+    
+    myPeaks=annotatePeak(tempFile,tssRegion = dists,TxDb=testtx,verbose=FALSE)
+    
+    ex_annot = as.data.frame(myPeaks)#myPeaks@anno
+    print("The number of rows pre-filtering is")
+    print(nrow(ex_annot))
+    if(promoterOnly){
+      ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= dists[2],]
+    }
+    #Best way to incorporate distances?
+    #Should this override promoter if TRUE since non-default?
+    else if(enhancerOnly){
+      ex_annot=ex_annot[abs(ex_annot$distanceToTSS) >= 50000,]
+      ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 200000,]
+      ex_annot=ex_annot[ex_annot$annotation=="Distal Intergenic",]
+    }
+    print("The number of rows after filtering is")
+    print(nrow(ex_annot))
+    #Initially sorted by -log10(pvalue) to keep most significant gene for category, but could change for other methods 
+    ex_annot$pValue
+    ex_annot=ex_annot %>%
+      arrange(desc(pValue))
+    
+    unique_annot=ex_annot[!duplicated(ex_annot$geneId),]
+    
+    print("After adjusting for uniqueness")
+    print(nrow(unique_annot))
+    
+    if(rankMetric=="pval"){
+      unique_annot=arrange(unique_annot,desc(unique_annot$pValue*sign(unique_annot$signalValue)))
+      
+      myranked=unique_annot$pValue*sign(unique_annot$signalValue)
+    }
+    
+    if(rankMetric=="foldchange"){
+      unique_annot=arrange(unique_annot,desc(unique_annot$signalValue))
+      
+      myranked=unique_annot$signalValue
+    }
+    
+    if(rankMetric=="both"){
+      unique_annot=arrange(unique_annot,desc(unique_annot$pValue*unique_annot$signalValue))
+      myranked=unique_annot$pValue*unique_annot$signalValue
+    }
+    names(myranked)=unique_annot$geneId
+    return(myranked)
+    #myRankedGenes[count]=myranked
+    #count=count+1
+  }
+  
+  #names(my)
+  #Significantly better results with duplicate peaks
+  # ego <- gseGO(geneList     = myRankedGenes,
+  #              OrgDb        = orgData,
+  #              keyType="GID",
+  #              ont          = goCat,
+  #              minGSSize    = minSize,
+  #              maxGSSize    = maxSize,
+  #              pvalueCutoff = 0.9,
+  #              verbose      = TRUE)
+  #myRankedGenes=list(myRankedGenes)
+  #names(myRankedGenes)=sampNames
+  #print(myRankedGenes)
+  pre_genes = lapply(fileList,chipgseahelper)#function(i) as.data.frame(i)$geneId)
+  
+  if(length(sampNames)==0){
+    sampNames=paste0("Sample_", 1:length(fileList))
+  }
+  
+  names(pre_genes)=sampNames
+  set.seed(2025)
+  compGO <- compareCluster(geneCluster = pre_genes,#genes, 
+                           #universe=backgroundids,
+                           fun = "gseGO",
+                           keyType = "GID", 
+                           OrgDb = orgData, 
+                           ont = goCat, 
+                           pvalueCutoff = qval,
+                           pAdjustMethod = "BH")#, readable=TRUE)
+  if(plotting){
+    dotplot(compGO, showCategory = 10, title = "GO Pathway Enrichment Analysis") 
+  }
+  if(file.exists(tempFile)) {
+    file.remove(tempFile)
+  }
+  return(compGO)
+}
+
+#Example usage
+compareResults=compareChIPGSEA(c("BF_Ac_D1vD3DiffbindResults.csv","BF_Ac_D3vD7DiffbindResults.csv"),orgData=org.Aaegypti.eg.db,goCat="BP",sampNames=c("BF D1vd3","BF D3vD7"))
+dotplot(compareResults)
