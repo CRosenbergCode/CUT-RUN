@@ -92,9 +92,13 @@ makeGViz=function(annotationFile="",reads=c(),peaks=c(),geneBodies=TRUE,transcri
 
 #This function is called using the ouput of the makeGviz function (a vector of tracks)
 #A chromosome and start and end point must also be provided
-plotAligns=function(tracks,chromosome,start,end,gene="",heights=c(),title=""){
-  if(length(gene)>0){
-    
+plotAligns=function(tracks,chromosome,start,end,gene="",heights=c(),title="",gff="VectorBase-68_AaegyptiLVP_AGWG.gff"){
+  if(nchar(gene)>0){
+    testtx=makeTxDbFromGFF(gff,format="gff3")
+    myannot=AnnotationDbi::select(testtx, keys = c(gene), columns=c("TXCHROM","TXSTART","TXEND","TXNAME"),keytype="GENEID")
+    chromosome=myannot$TXCHROM
+    start=myannot$TXSTART
+    end=myannot$TXEND
   }
   if(length(heights)==0){
     heights=rep(1,length(tracks))
