@@ -115,26 +115,17 @@ rnaGSEA = function(rnaFile,orgData,rankMetric = "pval",goCat="All",minSize=15,ma
   #dotplot(egoCC)+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))#+theme(text = element_text(size = ))
   return(egoCC)
 }
+
 library(org.Ctarsalis.eg.db)
 exampleGo=rnaGSEA("CulexAdultPlaqueTable_4_2_2025.csv",goCat="MF",orgData = org.Ctarsalis.eg.db,rankMetric ="both")
 
 examplePCR=rnaGSEA("CulexAdultPCRTable_4_2_2025.csv",goCat="MF",orgData = org.Ctarsalis.eg.db,rankMetric ="both")
 
 dotplot(examplePCR)
+testTemp=read.csv("CulexAdultPlaqueTable_4_2_2025.csv")
+write.csv(testTemp[testTemp$pvalue<0.9,],"CulexAdultPCRTable_4_2_2025.5.csv",row.names = FALSE)
 
-#CulexAdultPCRTable_4_2_2025.csv
-
-
-examplePCR=rnaGSEA("Mock22_Mock30_DE_PVal.csv",goCat="BP",orgData = org.Ctarsalis.eg.db,rankMetric = "both")#"both")
-
-examplePCR=rnaGSEA("Mock22_Mock30_DE_PVal.csv",goCat="BP",orgData = org.Ctarsalis.eg.db,rankMetric = "both")#"both")
-
-#Mock22_Mock30_DE_PVal.csv
-
-head(examplePCR)
-
-dotplot(examplePCR)
-
+examplePCR=rnaGSEA("CulexAdultPCRTable_4_2_2025.5.csv",goCat="MF",orgData = org.Ctarsalis.eg.db,rankMetric ="both")
 
 #Plotting 
 goplot(exampleGo,showCategory = 5)
@@ -144,6 +135,11 @@ dotplot(exampleGo)
 
 #Example Usage
 exampleGo=rnaGSEA("RNAseqPilot.csv",goCat="BP",orgData = org.Aaegypti.eg.db)
+
+
+options(enrichplot.colours = c("yellow","purple"))
+options(enrichplot.colours = c("red","blue"))
+dotplot(exampleGo)
 
 head(exampleGo)
 
@@ -218,11 +214,10 @@ gmtGSEA = function(rnaFile,gmtFile,returnMultiple=FALSE){
 
 #Return just table of results
 
-#RosenbergCustomAnnotations_2025_2_28.gmt
-#RosenbergCustomAnnotations_2025_3_24.gmt
+myGMT=gmtGSEA("RVFVvBF_DAY1_DESeqresults_min_10_all-annot.csv","AAE_2025-4-16.gmt",returnMultiple = FALSE)
 
-myGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_3_24.gmt")
 head(myGMT)
+goplot(myGMT)
 
 #Return multiple objects used for plotting
 
@@ -235,15 +230,18 @@ plotEnrichment(multiGMT$paths[["IMM"]],
 
 #Enrichment Score Plot Subsetted by significance
 multiGMT=gmtGSEA("RNAseqPilot.csv","RosenbergCustomAnnotations_2025_3_24.gmt",returnMultiple=TRUE)
+
+
+head(multiGMT$table)
+
 selected_rows=multiGMT$table[multiGMT$table$padj<0.05,]
 selected_rows = selected_rows %>%
   arrange(padj)
 selected_GO=multiGMT$paths[selected_rows$pathway]
-selected_rows$pathway
 
 plotGseaTable(selected_GO, multiGMT$genes, selected_rows, 
-              gseaParam=0.5,colwidths =  c(2, 5, 0.8, 0, 1.2))+theme(axis.text.y = element_text(color = "grey20", size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"))
-
+              gseaParam=0.5,colwidths =  c(2, 5, 0.8, 0, 1.2))+theme(axis.text.y = element_text(color = "grey20", size = 50, angle = 0, hjust = 1, vjust = 0, face = "plain"))
+#Size was 15
 #TODO
 #Write description
 
@@ -311,6 +309,7 @@ dotplot(testCompareRNA,showCategory = 5)
 testCompareRNA@compareClusterResult
 
 
+#https://github.com/alserglab/fgsea/issues/29
 
 #TODO
 #Write description
@@ -505,17 +504,6 @@ testcompareDistalPilot=compareChipGO(c("PilotAcRVFV50K_200K_Distal.peakFile","Pi
 dotplot(testcompareDistalPilot,showCategory = 5)
 
 
-#Plotting to look at further
-
-#p1 <- heatplot(edox, showCategory=5)
-#p2 <- heatplot(edox, foldChange=geneList, showCategory=5)
-#cowplot::plot_grid(p1, p2, ncol=1, labels=LETTERS[1:2])
-
-
-
-
-
-
 #TODO
 #Write description
 
@@ -707,23 +695,6 @@ bpchip=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,go
 
 dotplot(bpchip)
 
-
-bpchipEnhancer=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "BP",promoterOnly = FALSE,enhancerOnly = TRUE)
-
-dotplot(bpchipEnhancer)
-
-
-mfchip=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "MF",promoterOnly = TRUE,enhancerOnly = FALSE)
-
-dotplot(mfchip)
-
-
-mfchipEnhancer=ChIPGSEA("BF_Ac_D1vD3DiffbindResults.csv",orgData = org.Aaegypti.eg.db,goCat = "MF",promoterOnly = FALSE,enhancerOnly = TRUE)
-
-dotplot(mfchipEnhancer)
-
-#BF_Ac_D3vD7DiffbindResults.csv
-
 compareChIPGSEA=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",rankMetric = "pval",goCat="All",qval=0.5,plotting=FALSE,sampNames=c(),promoterOnly=TRUE,enhancerOnly=FALSE,dists=c(-2000,2000),keycol="GID"){
   #myRankedGenes=vector("list", length = length(fileList))
   tempFile="tempDiffbind.tsv"
@@ -835,3 +806,148 @@ compareChIPGSEA=function(fileList,orgData,txFile="VectorBase-68_AaegyptiLVP_AGWG
 #Example usage
 compareResults=compareChIPGSEA(c("BF_Ac_D1vD3DiffbindResults.csv","BF_Ac_D3vD7DiffbindResults.csv"),orgData=org.Aaegypti.eg.db,goCat="BP",sampNames=c("BF D1vd3","BF D3vD7"))
 dotplot(compareResults)
+
+
+chipGMT = function(peakFile,gmtFile,rankMetric = "pval",txFile="VectorBase-68_AaegyptiLVP_AGWG.gff",qval=0.5,promoterOnly=TRUE,dists=c(-2000,2000),returnMultiple=FALSE){
+  tempFile="tempDiffbind.tsv"
+  
+  testtx=makeTxDbFromGFF(txFile)
+  
+  myDiffbind=read.csv(peakFile)
+  slimDiffbind=myDiffbind[c("chr","start","end")]
+  
+  slimDiffbind["name"]=myDiffbind[[1]]
+  slimDiffbind["score"]=0
+  slimDiffbind["strand"]="."
+  slimDiffbind["signalValue"]=myDiffbind$Fold
+  slimDiffbind["pValue"]=-log10(myDiffbind$p.value)
+  slimDiffbind["qValue"]=-log10(myDiffbind$FDR)
+  slimDiffbind["peak"]=-1
+  
+  write.table(slimDiffbind,tempFile,sep="\t",row.names=FALSE)
+  
+  
+  myPeaks=annotatePeak(tempFile,tssRegion = dists,TxDb=testtx,verbose=FALSE)
+  
+  print("PastPeakAnnotation!")
+  
+  ex_annot = as.data.frame(myPeaks)#myPeaks@anno
+  print("The number of rows pre-filtering is")
+  print(nrow(ex_annot))
+  if(promoterOnly){
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= dists[2],]
+  }
+  #Best way to incorporate distances?
+  #Should this override promoter if TRUE since non-default?
+  else if(enhancerOnly){
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) >= 50000,]
+    ex_annot=ex_annot[abs(ex_annot$distanceToTSS) <= 200000,]
+    ex_annot=ex_annot[ex_annot$annotation=="Distal Intergenic",]
+  }
+  print("The number of rows after filtering is")
+  print(nrow(ex_annot))
+  #Initially sorted by -log10(pvalue) to keep most significant gene for category, but could change for other methods 
+  ex_annot$pValue
+  ex_annot=ex_annot %>%
+    arrange(desc(pValue))
+  
+  unique_annot=ex_annot[!duplicated(ex_annot$geneId),]
+  
+  print("After adjusting for uniqueness")
+  print(nrow(unique_annot))
+
+  print("Ready to GO!")
+  
+  if(rankMetric=="pval"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$pValue*sign(unique_annot$signalValue)))
+    
+    myranked=unique_annot$pValue*sign(unique_annot$signalValue)
+  }
+  
+  if(rankMetric=="foldchange"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$signalValue))
+    
+    myranked=unique_annot$signalValue
+  }
+  
+  if(rankMetric=="both"){
+    unique_annot=arrange(unique_annot,desc(unique_annot$pValue*unique_annot$signalValue))
+    myranked=unique_annot$pValue*unique_annot$signalValue
+  }
+  names(myranked)=unique_annot$geneId
+  
+  myGO = fgsea::gmtPathways(gmtFile)
+  set.seed(2025)
+  fgResPVal <- fgsea::fgsea(pathways =myGO, 
+                            stats = myranked,
+                            nPermSimple = 10000,
+                            eps = 0) 
+  writeP <- apply(fgResPVal,2,as.character)
+  if(file.exists(tempFile)) {
+    file.remove(tempFile)
+  }
+  if(returnMultiple){
+    return(list(table = fgResPVal,paths=myGO,genes=myranked))
+  }
+  return(fgResPVal)
+}
+
+mychip=chipGMT("PilotNewMerged_Results.csv",gmtFile = "AAE_2025-4-19-9-50-9.gmt",returnMultiple = TRUE)
+
+dotplot(mychip)
+
+gmttable=mychip$table
+
+selected_rows=mychip$table[mychip$table$padj<0.1,]
+selected_rows = selected_rows %>%
+  arrange(padj)
+selected_GO=mychip$paths[selected_rows$pathway]
+selected_rows$pathway
+
+plotGseaTable(selected_GO, mychip$genes, selected_rows, 
+              gseaParam=0.5,colwidths =  c(2, 5, 0.8, 0, 1.2))+theme(axis.text.y = element_text(color = "grey20", size = 50, angle = 0, hjust = 1, vjust = 0, face = "plain"))
+
+
+#AAE_2025-4-16.gmt
+
+rnaORA = function(rnaFile,orgData,goCat="All",minSize=15,maxSize=500,rankedList=c(),keycol="GID",asTable=FALSE,qval=0.5){
+  if(!asTable){
+    myDEresults=read.csv(rnaFile)
+  }
+  else{
+    myDEresults=rnaFile
+  }
+  gIDs=myDEresults$geneID
+  
+  ego <- enrichGO(gene = gIDs, 
+                keyType = "GID", 
+                OrgDb = orgData, 
+                ont = goCat, 
+                pAdjustMethod = "BH", 
+                pvalueCutoff = qval,
+                readable = TRUE)
+  return(ego)
+}
+
+pilot=read.csv("RNAseqPilot.csv")
+pcr=read.csv("CulexAdultPCRTable_4_2_2025.5.csv")
+subsetpcr=pcr[which(pcr$pvalue<0.005),]
+subsetpilot=pilot[which(pilot$pvalue<0.01),]
+egData=read.csv("Mock22_Mock30_DE_PVal.csv")
+subseteg=egData[which(egData$padj<0.01)&which(egData$log2FoldChange<0),]
+subseteg=egData[(egData$pvalue<0.005)&(egData$log2FoldChange>0)&(!is.na((egData$pvalue<0.005)&(egData$log2FoldChange>0))),]
+
+
+pcrORA=rnaORA(subsetpcr,orgData = org.Ctarsalis.eg.db,asTable = TRUE,qval = 0.9)
+head(pcrORA)
+
+pcrORA=rnaORA(subsetpcr,orgData = org.Ctarsalis.eg.db,asTable = TRUE)
+
+pilotORA=rnaORA(subsetpilot,orgData = org.Aaegypti.eg.db,asTable = TRUE)
+head(pilotORA)
+
+
+egORA=rnaORA(subseteg,orgData = org.Ctarsalis.eg.db,asTable = TRUE,qval = 0.9)
+head(egORA)
+
+
