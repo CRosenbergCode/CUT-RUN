@@ -10,7 +10,7 @@
 #SBATCH --output=%x.%A.log # gives slurm.ID.log
 
 module purge
-source activate base
+source $HOME/miniconda3/bin/activate base
 conda activate rnaPseudo
 
 date # timestamp
@@ -18,7 +18,7 @@ nthreads=$(($SLURM_NTASKS - 1))
 
 
 linenum=0
-for file in *.sam
+for file in $(ls *.sam)
 do
   TWO=${file/.sam/.bam}
   echo ${TWO}

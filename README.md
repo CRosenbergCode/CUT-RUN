@@ -20,6 +20,9 @@ The code in the CUT-RUN repository is intended to be run on HPC clusters, such a
 	- [Loading modules](#loading-modules)
 	- [Custom commands](#creating-custom-commands)
 - [How to use Slurm](#how-to-use-slurm)
+	- [Common Slurm Commands](#common-commands)
+	- [Debugging Slurm Jobs](#debugging-slurm-jobs)
+	- [Writing Slurm Job Scripts](#how-to-write-a-slurm-script)
 
 ## Using Riviera
 **YOU MUST USE THE GLOBALPROTECT VPN WHEN CONNECTING TO RIVIERA IF YOU ARE NOT ON CAMPUS.**
@@ -258,18 +261,126 @@ function salias() {
 Then, you can run your big commands, like unzipping a massive file, as slurm jobs like so: `salias unzip my_massive_file.zip`
 
 ## How to use Slurm
-Slurm is a jobs manager for HPC systems like Riviera. There is fairly comprehensive documentation you can read at https://slurm.schedmd.com/documentation.html. This will be a brief overview of the most common commands, `sbatch`, `srun`, `scancel`, `sacct`, `squeue`, and `sinfo`, as well as how to write a script for Slurm.
+Slurm is a jobs manager for HPC systems like Riviera. There is fairly comprehensive documentation you can read at https://slurm.schedmd.com/documentation.html. This will be a brief overview of the most common commands, `sbatch`, `srun`, `scancel`, `sacct`, `squeue`, and `sinfo`, how to use these commands, and how to write a script for Slurm.
+
+### Common Commands
+
 - **sbatch -** This is the most commonly-used command to run a slurm job. You must provide it with the file to be run, as well as any job parameters like dependencies. The basic pattern is `sbatch [options] script [args]`. 
 	- Most options can be written in the header of a script, which will be shown later. Some options must be determined when the job is run, like a dependency. An example of this can be seen in the array example scripts in the CUT-RUN github.
 	- After the options, you write the path to the script you will be executing as a Slurm job.
-	- After the script, you can provide the arguments that will be passed it. For example, the `03_SICC.sh` script requires a path to the bam files to be converted to bigwigs. It must be run like so: `sbatch 03_sicc.sh path/to/bams/folder`
+	- After the script, you can provide the arguments that will be passed it. For example, the `03_SICC.sh` script requires a path to the bam files to be converted to bigwigs. It must can run like so:
+``` bash
+sbatch 03_SICC.sh path/to/bams/folder
+```
 - **srun -** srun is an interactive version of sbatch, allowing the user to see the program as it executes and provide inputs as needed. This command is less common in general, and entirely unused in the CUT-RUN pipeline, but it is still important to know. It uses the same syntax as sbatch.
 - **scancel -** scancel stops a slurm job based on ID. You may need this if you realize you have made an error. You can find a job ID by running `sacct` or `squeue`. Job IDs are also printed to the terminal upon being scheduled. Although it has other options as shown on the docs, you will likely only ever need to know the following two uses:
 	- `scancel 12345` to cancel job 12345.
 	- `scancel {31415..31425}` to cancel jobs 31415 to 31425 (Only if you have scheduled several jobs at once and they all have sequential job IDs. Double-check to make sure you aren't trying to cancel someone else's job!)
-- **sacct -** sacct shows your recent slurm jobs and their status. (running, failed, completed, waiting, etc.) In most cases, simply entering `sacct` to the terminal on its own is enough. However, there are some cases where you may want to see more/less than its regular output.
-	- If you've been scheduling a lot of jobs recently, you may just want to subset it to the recent ones. In that case, you can run it with `tail`, using twice the number of lines as recent jobs you want to see. `sacct | tail -n10`
+- **sacct -** sacct shows your recent slurm jobs and their status. (running, failed, completed, waiting, etc.) In most cases, simply entering `sacct` in the terminal on its own is enough. However, there are some cases where you may want to see more/less than its regular output.
+	- If you've been scheduling a lot of jobs recently, you may just want to subset it to the recent ones. In that case, you can run it with `tail`, using twice the number of lines as recent jobs you want to see.
+
+	``` bash
+	sacct | tail -n10
+	```
 	- If you're checking on a job that was run a day prior, you'll need to specify that with the `--starttime` option, and possibly the `--endtime` option as well. Formatting of days is `YYYY-MM-DD`, and in order to use specific times of the day you must use the pattern `YYYY-MM-DDTHH:MM:SS`. Seconds may be omitted. That can be a bit confusing, so here is an example of a user checking the status of jobs that ran after *March 14th, 2025 at 3:32PM* but before *April 29th, 2025 at 2:50AM and 29 seconds*:
-		- `sacct --starttime 2025-03-14T15:32 --endtime 2025-04-29T02:50:29` (note the use of 24-hour time)
-- **squeue -** squeue shows current slurm jobs from all users, including those currently waiting on dependencies. It can simply be run by running `squeue` in the terminal. You can also combine it with `grep` to find jobs specifically belonging to you, like so: `squeue | grep yourusername`
+	``` bash
+	sacct --starttime 2025-03-14T15:32 --endtime 2025-04-29T02:50:29
+	```
+	(note the use of 24-hour time)
+
+- **squeue -** squeue shows current slurm jobs from all users, including those currently waiting on dependencies. It can simply be run by running `squeue` in the terminal. You can also combine it with `grep` to find jobs specifically belonging to you, like so:
+``` bash
+squeue | grep yourusername
+```
 - **sinfo -** Generally not used, but sinfo can be helpful when scheduling jobs to see which partitions are currently being taken up most. If, for example, the week-long-highmem partition is being taken up and you have a program that normally uses that partition, you can check on the status of other partitions by running `sinfo`. If week-long-cpu is open and your program can still run with reduced available memory, you can run it on that partition instead.
+
+### Debugging Slurm Jobs
+After using `sbatch` to run a script, you should always check the job's status using the `sacct` command. (If it does not show up, give it a moment and re-try) If a job is marked as "FAILED", then you'll have to squish some bugs. Debugging can be a very complex process, so these steps will not cover everything. But, they are good starting points.
+1. **Ensure you have the right inputs.** By repeatedly pressing the up arrow key in the terminal, you can see your previous commands. Double-check that you `sbatch`ed the right script with the right inputs.
+2. **Check the out and err files.** When you run a Slurm script with `sbatch`, it will often generate a .out file, as well as a .err file if you have specified that in the script. These files contain the most helpful clues for debugging your jobs.
+**Common errors:**
+	- `EnvironmentNameNotFound: Could not find conda environment:` This error occurs when you try to load a conda environment that does not exist. Either you are missing the necessary environment (see [how to set up the CUT&RUN conda environments](#creating-the-cut-run-conda-environments) above) or the slurm job script is using the wrong environment. Open the slurm script with your preferred editor (MobaXTerm RTE, `nano`, `vi`, etc.) and check which environment it tries to load in the line that starts with `conda activate`. You can then replace it with the proper environment.
+	- `No such file or directory` This is a very general error. Some part of the code was unable to find a file it needed. This may occur because an incorrect file path was provided, or the code mis-navigated the file system, or perhaps the file simply does not exist. (much of the code in this repository assumes you have the whole repository installed, so an incomplete installation can cause issues) Most commonly, though, this might arise from **running the slurm job from the wrong directory**. It is easy to assume that slurm scripts are run in the directory in which they exist, but they are actually run in the directory you are currently in. *Unless directed otherwise*, always run slurm jobs from the directory they are in. (one such exception is in the hisat scripts)
+	- `Permission denied` This is also a relatively general error. There are two possibilities:
+		1. **The script is trying to do something it isn't allowed to do.** Most often in our case, this would be because it's trying to make edits in a directory you don't have permission to edit. (such as a directory that belongs to another user) Ensure that you're providing the correct directories and that the script is navigating directories correctly.
+  		2. **A file/directory needs permissions changed.** Some files or directories are marked as read-only, or maybe don't have execution permissions. Check what the script is trying to do (most often this will be apparent from the error message) and change permissions with the `chmod` command if necessary. To add a permission (`r` for reading, `w` for writing, `x` for executing) to a file, write the following command.
+		``` bash
+  		# Adds execution permissions. Replace x with r or w to add read or write permissions respectively.
+		chmod +x YourFile.file
+		```
+3. **Search up your error online!** Try copy/pasting the error message into your preferred search engine. If the error is related to a specific tool like Hisat2 or Deeptools, you may want to specify that as well. You'll have to dig through lots of different results, so try to be patient and don't rush. You can also potentially ask an AI chatbot, but you should always have a good idea of its limits of knowledge and provide as much background as possible.
+
+### How to Write a Slurm Script
+If you're trying to execute some code that takes a long time to run, you may want to do it as a slurm job to avoid a [situation like this](https://imgur.com/a/SWV0zcp). Slurm scripts can be somewhat complicated, so this will be a simple overview. It's best to check the [Slurm docs](https://slurm.schedmd.com/) for more details.
+1. Create a file to write the slurm script into. You can do this via the `touch` command. You can give it any file extension; `.slurm` is a common one. Here, we're using `.sh`.
+``` bash
+touch YourNewSlurmJob.sh
+```
+2. Open the script with your preferred text editor, such as MobaXTerm RTE, `nano`, or `vi`.
+3. Paste in the following comments at the top of the script. Very little of this is *required*, but it's best practice to include it. Do not write any code before these comments, as they direct Slurm how to set up the job. If you need more complex sbatch presets, there are many more options detailed on the Slurm docs [sbatch page](https://slurm.schedmd.com/sbatch.html).
+``` bash
+#!/bin/bash
+#SBATCH --partition=day-long-cpu
+#SBATCH --job-name=YourJobNameHere
+#SBATCH --output=%x.%j.out
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+```
+Be sure to replace `YourJobNameHere` with a descriptive job name, change `ntasks=1` to the number of threads you're using if the program you're running is multithreaded, and change `day-long-cpu` to the right partition. Here is a list of partitions on Riviera that you can choose from. You can also find an up-to-date version of this list by running `sinfo`.
+```
+PARTITION		TIME LIMIT	NODES
+day-long-highmem	1-00:00:00	2
+short-cpu		2:00:00		8
+short-gpu		2:00:00		1
+short-gpu		2:00:00		3
+short-highmem		2:00:00		2
+week-long-cpu		7-00:00:00	8
+week-long-gpu		7-00:00:00	2
+week-long-highmem	7-00:00:00	2
+day-long-cpu		1-00:00:00	8
+day-long-gpu		1-00:00:00	1
+day-long-gpu		1-00:00:00	3
+```
+4. Write the code (in bash) that will be run. It should generally run without any ongoing input from the user, but passing in arguments is encouraged if needed.
+	- To access user arguments, use a `$` symbol followed by the index of the argument you wish to read. So, `$1` for the first argument, `$2` for the second, `$3` for the third, etc. You can get all user arguments at once with `$@`. Here is an example script that reads user arguments and echoes them back.
+	``` bash
+	#!/bin/bash
+	#SBATCH --partition=short-cpu
+	#SBATCH --job-name=EchoBack
+	#SBATCH --output=%x.%j.out
+	#SBATCH --nodes=1
+	#SBATCH --ntasks=1
+	
+	echo "Your first argument was: $1"
+	echo "Your second argument was: $2"
+	echo "All of your arguments were: $@"
+	```
+	You might run this script as a slurm job like so:
+	``` bash
+	sbatch MyScript.sh Foo Bar Deadbeef
+	```
+	And would get back these outputs:
+	```
+	Your first argument was: Foo
+	Your second argument was: Bar
+	All of your arguments were: Foo Bar Deadbeef
+	```
+5. Once you have saved your script, be sure to test it! You are also highly encouraged to write a set of directions at the top of the script. You can find examples of these directions in numerous scripts in this repository. Here is the set of instructions from the BIGWIG `03.1_sortIndexArray.sh` script.
+```
+# ================ 03.1_sortIndexArray.sh ==================
+#
+#  DESCRIPTION: A Slurm array script to sort/index many bams
+#            at once. Requires an input file with the bams
+#            to be sorted/indexed.
+#
+#  USAGE: sbatch --array=0-(number of bams minus 1) 03.1_sortIndexArray.sh $1
+#
+#  INPUTS: $1 - A plaintext file containing the paths to bams
+#               to sort/index, one bam per line. This file is
+#               auto-generated by the SICC_array.sh script.
+#
+#  OUTPUT: Sorted .bam and .bai files in the same folder
+#          the inputs are in.
+#
+# ==========================================================
+```

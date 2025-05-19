@@ -1,0 +1,3 @@
+BF-d1-rep1-H3K9me.bam,BF-d1-rep2-H3K9me.bam,BF-d1-rep1-H3K27Ac.bam,BF-d1-rep2-H3K27Ac.bam,BF-d1-rep1input.bam
+BF-d3-rep2AGo2.bam,BF-d3-rep1-input.bam
+BF-d7-Rep3-Ac-clc.bam,BF-d7-Rep3--me1-clc.bam,BF-d7-rep2input.bam
