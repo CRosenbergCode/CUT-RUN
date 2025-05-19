@@ -1,18 +1,16 @@
-Purpose- Diffbind uses raw counts output from MACS2 to compare treatment groups. Is a wrapper for DESeq2 or edgeR differential expression packages. Identifies differential peaks and overlaps between sample groups. Input- MACS2 output peak files, .bam files, bam indexes(.bai), .bed file outputs, Input file metadata.csv input files are downloaded locally, because Diffbind is an R package.
+﻿# Diffbind
+**Purpose -** Determines differentially-bound sites between ChIP-seq experiments. It is a wrapper for DESeq2 and edgeR differential expression packages.
 
-Output- .csv files. Use the adjusted p value, which has applied a multiple testing adjustment.
+**Input -** .bed, .bam, and .bai files from MACS2 or SEACR, as well as a .RDS greylist file.
 
-DiffBindFunction.R contains the code for utilizing diffbind as described above.
+**Output -** .csv files. Be sure to use the adjusted p value.
 
-geneSubsetFunctions.R is used to create a gtf file containing only genes of interest (such as those differentially expressed by RNA-seq) as well as pull promoter regions of interest from a list of GOIs.
+## Usage
+Diffbind is an R package, and thus must be run in R Studio. Connecting to an R Studio server is recommended. (Note for later, write more instructions on how to do this)
 
-PeakAdjustmentFunctions.R is used to create a smaller set of peaks based on applying greylists to diffbind or selecting MACS2 peaks which meet the criteria for p/q value and/or fold change.
-
-GeneDistanceShared.R takes a gtf containing a list of genes (or similar features like exons or promoter regions) and compares it to a list of peaks (generally the Diffbind output) to determine whether there are any within a given distance, or inside of the feature of interest.
-
-runSamtools_indexLoop.sh is a bash script to sort and create index files for bam files (sorted bams are necessary for diffbind).
-
-The RNAGeneSets directory contains example gtf files which contain commonly used sets of features such as all genes, genes as well as pseudogenes and long non-coding RNA, and exons and 3’ UTRs (common binding sites for Ago2 in Aedes aegypti).
-
-The DiffbindSampleSheets directory contains examples of the sample sheets used by Diffbind to determine sample metadata and file locations.
-
+1. You will need to put your peak caller (MACS2/SEACR) outputs somewhere the machine running R Studio can reach them.
+2. Open the `DiffBindFunction.R` script in R studio.
+3. Un-comment lines 8-11 and run them. You can highlight them and click the "Run" button in R to do so. (or Ctrl+Enter) Re-comment when you are done, since they only need to be run once.
+4. Change the setwd command on line 13 to point to the relevant directory for accessing your peak caller outputs. (This should be the folder where the outputs are)
+5. Change the `greylist` variable to point to your .RDS greylist file.
+6. 

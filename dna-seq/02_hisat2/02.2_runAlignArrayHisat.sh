@@ -13,15 +13,14 @@
 echo "[$0] $SLURM_JOB_NAME $@" # log the command line
 
 module purge
-source activate base
+source $HOME/miniconda3/bin/activate base
 conda activate rnaPseudo
 
 date # timestamp
 
-filename="FastqTrimmed.txt" # $1
-fastqfolder="trimmed/"
-mkdir HisatAligned
-#ls ${fastqfolder} -p | grep -v / | grep ".fastq.gz" | grep "R1" | grep "trimmed." >> ${filename}
+filename=FastqTrimmed.txt # $1
+fastqfolder=../01_fastp/trimmed/
+ls ${fastqfolder} -p | grep -v / | grep ".fastq.gz" | grep "R1" | grep "trimmed." > ${filename}
 # This isn't necessary; if you ls in a directory and don't specify parts of the filename, you won't get
 # the directory prefix. Also it seemed to be suffering from some sort of Word formatting problems with "smart" quotes, so I changed that.
 #sed -e 's/^\/..\/01_fastp\/trimmed\///' -i ${filename}
@@ -32,11 +31,11 @@ do
     if [ $SLURM_ARRAY_TASK_ID -eq $linenum ]
     then
       TWO=${line/_R1_/_R2_}
-      OUT=${TWO:8:-16} # Cut off "trimmed." (8 characters) and "_R2_001.fastq.gz" (16 characters)
+      OUT=${TWO:8:-16} # Cut off "trimmed." (8 characters) and "_R#_001.fastq.gz" (16 characters)
       echo $OUT
       #STRANDNESS MAY NEED TO CHANGE FOR DIFFERENT LIBRARY PREP KITS
       #Does not matter for DNA :D
-      hisat2 --phred33 -p 32 --no-mixed -x hisatIndex/Aedesae68Index --no-spliced-alignment -X 1000 -1 ${fastqfolder}${line} -2 ${fastqfolder}${TWO} -S HisatAligned/$OUT.sam
+      hisat2 --phred33 -p 32 -x hisatIndex/genomeAedesEColi -1 ${fastqfolder}${line} -2 ${fastqfolder}${TWO} -S HisatAligned/$OUT.sam
     fi
     linenum=$((linenum + 1))
 done < $filename

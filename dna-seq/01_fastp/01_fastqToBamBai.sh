@@ -1,10 +1,10 @@
-# =================== 01_fastqToBam.sh =====================
+# =================== 01_fastqToBamBai.sh =====================
 #
-#  DESCRIPTION: A short non-slurm script to successively
+#  DESCRIPTION: A short NON-SLURM script to successively
 #            run fastp and the three hisat scripts with no
-#            input from the user.
+#            input from the user, and sort/index resulting bams.
 #
-#  USAGE (DON'T RUN WITH SLURM): bash 01_fastqToBam.sh
+#  USAGE (DON'T RUN WITH SLURM): bash 01_fastqToBamBai.sh
 #
 #  BEFORE RUNNING: This script should be in the 01_fastp folder.
 #            Your raw .fastq.gz files should be in the
@@ -13,11 +13,11 @@
 #            to avoid mixing your runs. You can always move old
 #            files to another folder if you want to save them.
 #
-#  OUTPUT: .bam files in the 02_hisat2/HisatAligned directory,
-#          and other products of the fastq and hisat2 scripts.
-#          (trimmed fastq.gz files, .ht2, .sam files)
+#  OUTPUT: sorted .bam and .bai files in the 02_hisat2/HisatAligned
+#          directory, and other products of the fastq and hisat2
+#          scripts. (trimmed fastq.gz files, .ht2, .bam files)
 #
-# ==========================================================
+# =============================================================
 
 module load slurm
 
@@ -47,4 +47,7 @@ fi
 
 # When all array jobs finish, run the bam loop
 cd HisatAligned
-sbatch --depend=afterok:${array_id} ../02.3_runBamLoop.sh
+bamloop_message=$(sbatch --depend=afterok:${array_id} ../02.3_runBamLoop.sh)
+bamloop_id=$(echo $bamloop_message | grep -oh "[0-9]*$")
+
+sbatch --depend=afterok:${bamloop_id} ../../01_fastp/sort_index_helper.sh

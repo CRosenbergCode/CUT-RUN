@@ -18,13 +18,16 @@
 
 
 # This is a helper script and not intended to be run on its own.
+# It sorts/indexes all the bams in the current directory.
 
 # There's no reason you CAN'T run it on its own, though.
 # To do so, sbatch this script from whatever directory
-# you have your unsorted bams in.
+# you have your unsorted bams in, like so:
+
+# sbatch path/to/sort_index_helper.sh
 
 
-source activate base
+source $HOME/miniconda3/bin/activate base
 conda init
 conda activate samtools
 
