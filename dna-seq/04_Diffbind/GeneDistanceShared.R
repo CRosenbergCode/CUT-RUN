@@ -38,6 +38,33 @@ options(readr.show_col_types = FALSE)
 #It is not recommended to be used unless debugging the code
 
 
+#Outputs Column description (column #)
+#Chromosome (1)
+#The chromosome the gene is one
+#Gene Start (2)
+#The 
+
+
+#Gene Orientation (4)
+#+ indicates the gene is on the positive sense strand, - is the negative sense strand
+#Peak Number (5)
+#This is the number of the row the peak is in on the input file (generally diffbind output)
+#5 Prime Distance (6)
+#This is the minimum distance from one
+#3 Prime Distance
+#Peak Inside Gene (8)
+#This is a boolean value that indicates whether any part of the peak overlaps with the gene body
+#Gene ID (9)
+#This is the modern ID used to refer to the gene without ambiguity (i.e. AAEL001234 in Aedes aegypti or gene1234 in Culex tarsalis)
+#Gene Name (10)
+#This is the gene's "common name", if it possesses one. If it does not, this column will have the gene ID.
+#Gene Description (11)
+#A full name more complete deiscription of what the gene does, if available. 
+#EBI Biotype (12)
+#Whether the feature is a protein coding protein, a lncRNA, or another category of region
+#This is intended to allow flexibility to incorporate other types of data like exons if desired
+#
+
 getGeneDistances=function(gtfFile,diffPeakFile,topN=-1,verbose=FALSE,sampName="ChIP",distance=10000,saveResults=TRUE,inGene=TRUE,nearEnd=TRUE,bedFormat=FALSE){
   
   orientCol=-1
@@ -371,6 +398,42 @@ ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac
 #Look for matches between all peaks in a set of diffbind output, using an old bed file
 ExampleObj = getGeneDistances("AedesGenes.bed","NewPilotPromoterPlusBodyMACS2_Ac_Sig.csv",bedFormat = TRUE,distance = 10000,inGene=FALSE)
 
+testFrame=read.csv("BF_Ac_D7vsRVFV_Ac_D7_SEACRPilot.csv")
+nrow(testFrame)
+write.csv(head(testFrame,n=1000),"AssignTests.csv")
+
+
+#BF_H3K27ac_d7_vs_SF_H3K27ac-DiffBind-out.csv
+#AedesGenes_CR.gtf
+
+ex=getGeneDistances("AedesGenes_CR.gtf","Top1000BF_Ac_D7_Diffbind.csv",distance = 2000,inGene=FALSE,bedFormat = TRUE)
+
+
+ex=getGeneDistances("Aedes68Genes.bed","AssignTests.csv",distance = 5000,inGene=FALSE,bedFormat = TRUE)
+
+
+write.csv(ex,"ExampleChipDistances.csv")
+
+myPilotResults=getGeneDistances("Aedes68Genes.bed","PilotNew_Results.csv",distance=2000,inGene=TRUE,bedFormat=TRUE)
+
+nearend=getGeneDistances("Aedes68Genes.bed","C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ago2_D1_Rep2_Control_peaks.narrowPeak",distance = 2000,inGene=FALSE,bedFormat = TRUE)
+
+saveRDS(nearend,"BF_Ago2_D1_Rep2_NearEnd.RDS")
+
+inbody=getGeneDistances("Aedes68Genes.bed","C:\\Users\\hunte\\Desktop\\AltChip\\Peaks\\NewPilotDefault\\BF_Ago2_D1_Rep2_Control_peaks.narrowPeak",distance = 2000,nearEnd = FALSE,inGene=TRUE,bedFormat = TRUE)
+
+saveRDS(inbody,"BF_Ago2_D1_Rep2_InBody.RDS")
+
+notend=inbody[inbody$`5 Prime Dist`>2000,]
+notend=notend[notend$`3 Prim Dist`>2000,]#Add e to Prime if reran
+
+
+unique(notend$`Gene ID`)
+
+unique(nearend$`Gene ID`)
+
+intersect(notend$`Gene ID`,nearend$`Gene ID`)
+
 #Examples using peaks from the sample file
 allSamps=read.csv("CUT_RUN_Meta_File_MACS2_0.05_keepdup.csv")
 PilotAcSamps=allSamps[allSamps$Factor=="H3K27Ac",]
@@ -381,3 +444,39 @@ pilotMergedBFAcPeaks=PilotAcSamps[PilotAcSamps$Condition=="BF",]$Peaks[1]
 rvfvAcDistant=getGeneDistances("Aedes68Genes.bed",pilotMergedRVFVAcPeaks,distance = 200000,nearEnd = TRUE,inGene=FALSE,bedFormat = TRUE)
 
 bfAcDistant=getGeneDistances("Aedes68Genes.bed",pilotMergedBFAcPeaks,distance = 100000,nearEnd = TRUE,inGene=FALSE,bedFormat = TRUE)
+
+
+testcsv=read.csv("BF_H3K27ac_d7_vs_SF_H3K27ac-DiffBind-out-NEW.csv")
+
+dnaStart=testcsv$start
+dnaEnd=testcsv$end
+dnaChrom=testcsv$chr
+dnaFold=testcsv$Fold
+
+# Added 4/1/2025
+pvalue=testcsv$p.value
+fdr=testcsv$FDR
+
+sum(testcsv$Conc==0)
+
+sum(dnaFold==0)
+sum(is.na(dnaFold))
+sum(is.na(dnaFold))
+sum(is.na(dnaFold))
+sum(is.na(dnaFold))
+sum(is.na(pvalue))
+sum(is.na(fdr))
+
+table=read.table("AedesGenes.gtf",sep="\t")
+
+tabletigs=table$V1
+
+sum(!(dnaChrom %in% tabletigs))
+
+dnaChrom[!(dnaChrom %in% tabletigs)]
+
+unique(testcsv$)
+unique(table$V8)
+sum(!(tabletigs %in% dnaChrom))
+
+#9566 problem for some reason

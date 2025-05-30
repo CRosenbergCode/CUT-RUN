@@ -3,13 +3,6 @@
 #https://www.biostars.org/p/9543513/
 #https://bioconductor.org/packages/devel/bioc/manuals/DiffBind/man/DiffBind.pdf
 
-#One time Installation
-#Run once, then comment out
-#if (!require("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("edgeR")
-#BiocManager::install("Repitools")
-
 setwd("C:\\Users\\hunte\\Desktop\\AltChip")
 library(BiocParallel)
 register(SerialParam())
@@ -19,6 +12,7 @@ library(edgeR)
 library(GenomicRanges)
 library(Repitools)
 
+#BiocManager::install("DiffBind")
 
 #namesOne and namesTwo are not necessary to provide, they are labels
 #Using them helps properly keep track of the comparison groups (i.e. RVFV Ac vs. BF Ac)
@@ -40,8 +34,15 @@ library(Repitools)
 #The samples compared in the contrast can change, but expected peak size
 #CANNOT be changed when reading from a file
 
+#Diffbind can use one of two analysis methods for detecting the differential presence of sequences, either DESeq2 or EdgeR
+#Both are RNA-seq differential expression libraries and both are reliable, but EdgeR appears to function better with our ChIP-seq software
+#EdgeR is the default, but setting 'edger=FALSE' during the function call will set DESeq2 to be used instead
+
+#tableIn allows the user to provide a dataframe object representing the metadata file instead of a file path
+#This allows for more flexibility and the use of the metadata sheet for easily selection of samples
+
 runDiffbind = function(sampleFile,samples1,samples2,plotting=FALSE,saving=TRUE,summits=FALSE,sampleName=FALSE,
-                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=FALSE,blacklist=c(),tableIn=FALSE){
+                       namesOne="Condition1",namesTwo="Condition2",fromFile=FALSE,CSV=TRUE,edger=TRUE,blacklist=c(),tableIn=FALSE){
   if(fromFile){
     contrastOnly=readRDS(sampleFile)
   }
@@ -152,3 +153,23 @@ day7MeSamps=day7MeSamps[day7MeSamps$RiftExperiment==FALSE,]
 me_day3=runDiffbind(day3MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day3",samples1=1:3,samples2=4:5)
 
 me_day7=runDiffbind(day7MeSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_H3K9Me3",namesTwo="SF_H3K9Me3_Day7",samples1=1:3,samples2=4:6)
+
+BFAcSamps=allSamps[allSamps$Factor=="H3K27Ac",]
+BFAcSamps=BFAcSamps[BFAcSamps$Condition=="BF",]
+BFAcSamps=BFAcSamps[BFAcSamps$Day!=7,]
+
+write.csv(me_day7,"BF_H3K9Me_d7_vs_SF_H3K9Me-DiffBind-out.csv")
+
+
+BFAc_d1_d3=runDiffbind(BFAcSamps,tableIn=TRUE,plotting=TRUE,namesOne="BF_Ac_D1",namesTwo="BF_Ac_D3",samples1=c(1,3,5),samples2=c(2,4,6),edger = TRUE)
+
+write.csv(BFAc_d1_d3,"BF_Ac_D1vD3DiffbindResults.csv")
+
+BFAcSampsLate=allSamps[allSamps$Factor=="H3K27Ac",]
+BFAcSampsLate=BFAcSampsLate[BFAcSampsLate$Condition=="BF",]
+BFAcSampsLate=BFAcSampsLate[BFAcSampsLate$Day!=1,]
+BFAcSampsLate=BFAcSampsLate[BFAcSampsLate$RiftExperiment=="FALSE",]
+
+
+BF_Ac_d3_d7=runDiffbind(BFAcSampsLate,tableIn=TRUE,plotting=TRUE,namesOne="BF_Ac_D1",namesTwo="BF_Ac_D3",samples1=c(1:3),samples2=c(4:5),edger = TRUE)
+write.csv(BF_Ac_d3_d7,"BF_Ac_D3vD7DiffbindResults.csv")
